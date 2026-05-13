@@ -52,4 +52,18 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    // 404 Not Found
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorRespuestaDTO> manejarNotFound(ResourceNotFoundException ex, WebRequest request) {
+        ErrorRespuestaDTO error = new ErrorRespuestaDTO(LocalDateTime.now(), ex.getMessage(), request.getDescription(false));
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    // 400 Bad Request (Para lógica de negocio fallida)
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorRespuestaDTO> manejarNegocio(BusinessException ex, WebRequest request) {
+        ErrorRespuestaDTO error = new ErrorRespuestaDTO(LocalDateTime.now(), "Error de operación", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
 }
