@@ -12,7 +12,7 @@ import org.springframework.web.context.request.WebRequest;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.Sistema.Backend.Controller")
 public class GlobalExceptionHandler {
 
     // 1. Captura errores de "No encontrado" (404)
