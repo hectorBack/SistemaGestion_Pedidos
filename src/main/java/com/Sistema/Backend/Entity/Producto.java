@@ -24,6 +24,9 @@ public class Producto {
 
     private boolean disponible = true;
 
+    @Column(nullable = false)
+    private String categoria;
+
     @Column(name = "url_imagen")
     private String urlImagen;
 }
