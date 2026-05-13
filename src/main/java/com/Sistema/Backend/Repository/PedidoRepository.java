@@ -22,6 +22,10 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // Para buscar rápidamente por los últimos dígitos de WhatsApp
     List<Pedido> findByWhatsappFinal(String whatsappFinal);
 
-    @Query("SELECT SUM(p.total) FROM Pedido p WHERE p.fechaCreacion >= :inicio AND p.fechaCreacion <= :fin AND p.estado = 'ENTREGADO'")
+    // Consulta para el Reporte: Contar pedidos en un rango de fechas
+    long countByFechaCreacionBetween(LocalDateTime inicio, LocalDateTime fin);
+
+    //Consulta para el Reporte: Sumar ingresos en un rango de fechas
+    @Query("SELECT SUM(p.total) FROM Pedido p WHERE p.fechaCreacion BETWEEN :inicio AND :fin AND p.estado != 'CANCELADO'")
     BigDecimal sumarTotalVentasPorPeriodo(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
 }
