@@ -10,4 +10,6 @@ import java.util.List;
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
     // Para mostrar solo lo que hay en existencia en el link del cliente
     List<Producto> findByDisponibleTrue();
+
+    List<Producto> findByNombreContainingIgnoreCase(String nombre);
 }

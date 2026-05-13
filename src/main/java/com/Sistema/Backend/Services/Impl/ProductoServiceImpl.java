@@ -3,6 +3,7 @@ package com.Sistema.Backend.Services.Impl;
 import com.Sistema.Backend.Dto.Request.ProductoRequestDTO;
 import com.Sistema.Backend.Dto.Response.ProductoResponseDTO;
 import com.Sistema.Backend.Entity.Producto;
+import com.Sistema.Backend.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Mapper.ProductoMapper;
 import com.Sistema.Backend.Repository.ProductoRepository;
 import com.Sistema.Backend.Services.ProductoService;
@@ -37,14 +38,11 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     @Transactional
     public ProductoResponseDTO actualizar(Long id, ProductoRequestDTO request) {
+        // Usamos tu nueva excepción personalizada
         Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Producto con ID " + id + " no encontrado"));
 
-        producto.setNombre(request.getNombre());
-        producto.setDescripcion(request.getDescripcion());
-        producto.setPrecio(request.getPrecio());
-        producto.setDisponible(request.isDisponible());
-        producto.setUrlImagen(request.getUrlImagen());
+        actualizarCampos(producto, request);
 
         return productoMapper.toResponseDTO(productoRepository.save(producto));
     }
@@ -58,9 +56,8 @@ public class ProductoServiceImpl implements ProductoService {
 
     @Override
     public List<ProductoResponseDTO> listarDisponibles() {
-        // Asumiendo que crearás findByDisponibleTrue() en el Repository
-        return productoRepository.findAll().stream()
-                .filter(Producto::isDisponible)
+        // MEJORA: Filtrar en DB, no en Java
+        return productoRepository.findByDisponibleTrue().stream()
                 .map(productoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -69,7 +66,7 @@ public class ProductoServiceImpl implements ProductoService {
     @Transactional
     public void eliminar(Long id) {
         if (!productoRepository.existsById(id)) {
-            throw new EntityNotFoundException("No se puede eliminar: Producto no encontrado");
+            throw new ResourceNotFoundException("No se puede eliminar: Producto no encontrado");
         }
         productoRepository.deleteById(id);
     }
@@ -93,20 +90,16 @@ public class ProductoServiceImpl implements ProductoService {
 
     @Override
     public Map<String, List<ProductoResponseDTO>> listarMenuPorCategoria() {
-        // 1. Obtenemos solo los productos disponibles
-        // 2. Los convertimos a DTOs
-        // 3. Los agrupamos por el campo categoria
-        return productoRepository.findAll().stream()
-                .filter(Producto::isDisponible)
+        // MEJORA: Solo traemos de la DB lo que necesitamos
+        return productoRepository.findByDisponibleTrue().stream()
                 .map(productoMapper::toResponseDTO)
                 .collect(Collectors.groupingBy(ProductoResponseDTO::getCategoria));
     }
 
     @Override
     public List<ProductoResponseDTO> buscarPorNombre(String nombre) {
-        // Usamos un stream para filtrar por nombre (ignorando mayúsculas/minúsculas)
-        return productoRepository.findAll().stream()
-                .filter(p -> p.getNombre().toLowerCase().contains(nombre.toLowerCase()))
+        // MEJORA: Búsqueda mediante query de base de datos
+        return productoRepository.findByNombreContainingIgnoreCase(nombre).stream()
                 .map(productoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -124,5 +117,15 @@ public class ProductoServiceImpl implements ProductoService {
         });
 
         productoRepository.saveAll(productos);
+    }
+
+    // Método privado para limpieza de código (Mantenibilidad)
+    private void actualizarCampos(Producto producto, ProductoRequestDTO request) {
+        producto.setNombre(request.getNombre());
+        producto.setDescripcion(request.getDescripcion());
+        producto.setPrecio(request.getPrecio());
+        producto.setDisponible(request.isDisponible());
+        producto.setUrlImagen(request.getUrlImagen());
+        producto.setCategoria(request.getCategoria());
     }
 }
