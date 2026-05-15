@@ -1,6 +1,8 @@
 package com.Sistema.Backend.Repository;
 
 import com.Sistema.Backend.Entity.Producto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,5 +13,9 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     // Para mostrar solo lo que hay en existencia en el link del cliente
     List<Producto> findByDisponibleTrue();
 
+    // Si no necesitas páginas, puedes conservar este (opcional)
     List<Producto> findByNombreContainingIgnoreCase(String nombre);
+
+    // Para la tabla del Administrador con paginación
+    Page<Producto> findByNombreContainingIgnoreCase(String nombre, Pageable pageable);
 }

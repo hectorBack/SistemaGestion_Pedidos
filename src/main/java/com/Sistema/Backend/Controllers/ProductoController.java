@@ -2,8 +2,12 @@ package com.Sistema.Backend.Controllers;
 
 import com.Sistema.Backend.Dto.Request.ProductoRequestDTO;
 import com.Sistema.Backend.Dto.Response.ProductoResponseDTO;
+import com.Sistema.Backend.Entity.Producto;
 import com.Sistema.Backend.Services.ProductoService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,8 +33,14 @@ public class ProductoController {
 
     // 2. Listar todos (Panel Admin)
     @GetMapping
-    public ResponseEntity<List<ProductoResponseDTO>> listarTodos() {
-        return ResponseEntity.ok(productoService.listarTodos());
+    public ResponseEntity<Page<Producto>> listarProductos(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String nombre
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Producto> productos = productoService.listarPaginado(nombre, pageable);
+        return ResponseEntity.ok(productos);
     }
 
     // 3. Listar solo disponibles (Para el cliente/link)

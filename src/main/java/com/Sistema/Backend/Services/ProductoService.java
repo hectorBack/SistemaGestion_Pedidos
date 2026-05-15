@@ -2,6 +2,9 @@ package com.Sistema.Backend.Services;
 
 import com.Sistema.Backend.Dto.Request.ProductoRequestDTO;
 import com.Sistema.Backend.Dto.Response.ProductoResponseDTO;
+import com.Sistema.Backend.Entity.Producto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
@@ -36,4 +39,9 @@ public interface ProductoService {
      * Actualizar precio masivamente por porcentaje (Ej: subir 10% a todo por inflación).
      */
     void actualizarPreciosMasivo(double porcentaje);
+
+    /**
+     * Listar paginado
+     */
+    Page<Producto> listarPaginado(String nombre, Pageable pageable);
 }
