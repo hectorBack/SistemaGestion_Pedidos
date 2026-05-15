@@ -13,12 +13,15 @@ import com.Sistema.Backend.Repository.PedidoRepository;
 import com.Sistema.Backend.Repository.ProductoRepository;
 import com.Sistema.Backend.Services.PedidoService;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -160,5 +163,23 @@ public class PedidoServiceImpl implements PedidoService {
                 LocalDate.now().atTime(LocalTime.MAX)
         );
         return total != null ? total : BigDecimal.ZERO;
+    }
+
+    @Override
+    public Page<PedidoResponseDTO> obtenerPedidosFiltrados(
+            EstadoPedido estado,
+            LocalDate fechaInicio,
+            LocalDate fechaFin,
+            Pageable pageable) {
+
+        // Convertimos LocalDate a LocalDateTime (de 00:00:00 a 23:59:59)
+        LocalDateTime inicio = fechaInicio.atStartOfDay();
+        LocalDateTime fin = fechaFin.atTime(LocalTime.MAX);
+
+        // Llamamos al repository (Usa Entidades)
+        Page<Pedido> pedidosPage = pedidoRepository.filtrarPedidos(estado, inicio, fin, pageable);
+
+        // Convertimos el Page de Entidades a Page de DTOs
+        return pedidosPage.map(pedidoMapper::toResponseDTO);
     }
 }

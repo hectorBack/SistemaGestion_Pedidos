@@ -4,8 +4,11 @@ import com.Sistema.Backend.Dto.Request.PedidoRequestDTO;
 import com.Sistema.Backend.Dto.Response.PedidoResponseDTO;
 import com.Sistema.Backend.Entity.EstadoPedido;
 import com.Sistema.Backend.Entity.Pedido;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface PedidoService {
@@ -47,4 +50,13 @@ public interface PedidoService {
      * Para saber cuánto se ha vendido en el día.
      */
     BigDecimal calcularTotalVentasDelDia();
+
+    /**
+     * Filtro avanzado: Por estado (opcional) y rango de fechas
+     */
+    Page<PedidoResponseDTO> obtenerPedidosFiltrados(
+            EstadoPedido estado,
+            LocalDate fechaInicio,
+            LocalDate fechaFin,
+            Pageable pageable);
 }

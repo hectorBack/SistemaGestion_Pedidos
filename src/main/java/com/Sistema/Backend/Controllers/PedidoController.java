@@ -5,11 +5,15 @@ import com.Sistema.Backend.Dto.Response.PedidoResponseDTO;
 import com.Sistema.Backend.Entity.EstadoPedido;
 import com.Sistema.Backend.Services.PedidoService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -65,6 +69,17 @@ public class PedidoController {
     @GetMapping("/ventas/hoy")
     public ResponseEntity<BigDecimal> obtenerVentasDia() {
         return ResponseEntity.ok(pedidoService.calcularTotalVentasDelDia());
+    }
+
+    // 8. filtrador
+    @GetMapping("/filtrar")
+    public ResponseEntity<Page<PedidoResponseDTO>> filtrar(
+            @RequestParam(required = false) EstadoPedido estado,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin,
+            Pageable pageable) {
+
+        return ResponseEntity.ok(pedidoService.obtenerPedidosFiltrados(estado, inicio, fin, pageable));
     }
 
 }
