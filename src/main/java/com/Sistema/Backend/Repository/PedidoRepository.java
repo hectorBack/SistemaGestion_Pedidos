@@ -34,7 +34,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // Filtro avanzado: Por estado (opcional) y rango de fechas
     @Query("SELECT p FROM Pedido p WHERE " +
             "(:estado IS NULL OR p.estado = :estado) AND " +
-            "(p.fechaCreacion BETWEEN :inicio AND :fin)")
+            "(p.fechaCreacion BETWEEN :inicio AND :fin)" +
+            "ORDER BY p.fechaCreacion DESC")
     Page<Pedido> filtrarPedidos(
             @Param("estado") EstadoPedido estado,
             @Param("inicio") LocalDateTime inicio,
