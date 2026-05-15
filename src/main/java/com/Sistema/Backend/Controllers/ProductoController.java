@@ -31,7 +31,7 @@ public class ProductoController {
         return new ResponseEntity<>(productoService.crear(request), HttpStatus.CREATED);
     }
 
-    // 2. Listar todos (Panel Admin)
+    // 2. Listar Paginado (Panel Admin)
     @GetMapping
     public ResponseEntity<Page<Producto>> listarProductos(
             @RequestParam(defaultValue = "0") int page,
