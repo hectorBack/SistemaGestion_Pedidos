@@ -11,7 +11,7 @@ import java.util.List;
 public class PedidoRequestDTO {
 
     @NotBlank(message = "El WhatsApp es obligatorio")
-    @Size(min = 4, max = 4, message = "Deben ser exactamente los últimos 4 dígitos")
+    @Size(min = 10, max = 10, message = "Deben ser exactamente los últimos 10 dígitos")
     private String whatsappFinal;
 
     @NotBlank(message = "El nombre del cliente es obligatorio")

@@ -16,6 +16,7 @@ public class PedidoMapper {
 
         PedidoResponseDTO dto = new PedidoResponseDTO();
         dto.setId(pedido.getId());
+        dto.setNombreCliente(pedido.getNombreCliente());
         dto.setWhatsappFinal(pedido.getWhatsappFinal());
         dto.setTotal(pedido.getTotal());
         dto.setEstado(pedido.getEstado().name());

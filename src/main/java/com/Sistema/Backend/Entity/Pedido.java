@@ -17,7 +17,7 @@ public class Pedido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "whatsapp_final", nullable = false, length = 4)
+    @Column(name = "whatsapp_final", nullable = false, length = 10)
     private String whatsappFinal;
 
     @Column(name = "nombre_cliente")
