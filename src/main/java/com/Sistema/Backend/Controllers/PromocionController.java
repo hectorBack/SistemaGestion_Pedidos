@@ -1,9 +1,11 @@
 package com.Sistema.Backend.Controllers;
 
+import com.Sistema.Backend.Dto.Request.ProductoRequestDTO;
 import com.Sistema.Backend.Dto.Request.PromocionRequestDTO;
 import com.Sistema.Backend.Dto.Response.PromocionResponseDTO;
 import com.Sistema.Backend.Services.PromocionService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +28,12 @@ public class PromocionController {
     @GetMapping("/vigentes")
     public List<PromocionResponseDTO> getPromocionesVigentes() {
         return promocionService.listarPromocionesVigentes();
+    }
+
+    // Actualizar promocion completo
+    @PutMapping("/{id}")
+        public ResponseEntity<PromocionResponseDTO> actualizar(@PathVariable Long id, @Valid @RequestBody PromocionRequestDTO request){
+        return ResponseEntity.ok(promocionService.actualizarPromocion(id, request));
     }
 
     @GetMapping

@@ -11,4 +11,5 @@ public interface PromocionService {
     List<PromocionResponseDTO> listarPromocionesVigentes();
     List<PromocionResponseDTO> listarTodas();
     void desactivarPromocion(Long id);
+    PromocionResponseDTO actualizarPromocion(Long id, PromocionRequestDTO request);
 }
