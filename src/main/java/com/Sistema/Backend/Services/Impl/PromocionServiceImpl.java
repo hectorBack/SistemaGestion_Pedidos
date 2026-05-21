@@ -12,6 +12,7 @@ import com.Sistema.Backend.Services.PromocionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,7 +45,11 @@ public class PromocionServiceImpl implements PromocionService {
     @Override
     @Transactional(readOnly = true)
     public List<PromocionResponseDTO> listarPromocionesVigentes() {
-        return promocionRepository.findPromocionesVigentes().stream()
+
+        // Captura el tiempo exacto del entorno donde corre tu API
+        LocalDateTime ahora = LocalDateTime.now();
+
+        return promocionRepository.findPromocionesVigentes(ahora).stream()
                 .map(promocionMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
