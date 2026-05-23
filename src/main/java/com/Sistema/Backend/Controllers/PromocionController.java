@@ -1,10 +1,13 @@
 package com.Sistema.Backend.Controllers;
 
-import com.Sistema.Backend.Dto.Request.ProductoRequestDTO;
 import com.Sistema.Backend.Dto.Request.PromocionRequestDTO;
 import com.Sistema.Backend.Dto.Response.PromocionResponseDTO;
+import com.Sistema.Backend.Entity.Promocion;
 import com.Sistema.Backend.Services.PromocionService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +21,18 @@ public class PromocionController {
 
     public PromocionController(PromocionService promocionService) {
         this.promocionService = promocionService;
+    }
+
+    //Listar Paginado
+    @GetMapping
+    public ResponseEntity<Page<Promocion>> listarPromociones(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String nombre
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Promocion> promociones = promocionService.listarPaginado(nombre, pageable);
+        return ResponseEntity.ok(promociones);
     }
 
     @PostMapping
@@ -34,11 +49,6 @@ public class PromocionController {
     @PutMapping("/{id}")
         public ResponseEntity<PromocionResponseDTO> actualizar(@PathVariable Long id, @Valid @RequestBody PromocionRequestDTO request){
         return ResponseEntity.ok(promocionService.actualizarPromocion(id, request));
-    }
-
-    @GetMapping
-    public List<PromocionResponseDTO> getTodas() {
-        return promocionService.listarTodas();
     }
 
     @PatchMapping("/{id}/desactivar")

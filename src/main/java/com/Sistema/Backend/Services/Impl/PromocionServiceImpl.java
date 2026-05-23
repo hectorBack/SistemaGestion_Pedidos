@@ -9,6 +9,8 @@ import com.Sistema.Backend.Mapper.PromocionMapper;
 import com.Sistema.Backend.Repository.ProductoRepository;
 import com.Sistema.Backend.Repository.PromocionRepository;
 import com.Sistema.Backend.Services.PromocionService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,6 +84,14 @@ public class PromocionServiceImpl implements PromocionService {
 
         // 3. Guardar cambios y retornar el DTO de respuesta mapeado
         return promocionMapper.toResponseDTO(promocionRepository.save(promocion));
+    }
+
+    @Override
+    public Page<Promocion> listarPaginado(String nombre, Pageable pageable) {
+        if(nombre == null || nombre.trim().isEmpty()){
+            return promocionRepository.findAll(pageable);
+        }
+        return promocionRepository.findByNombreContainingIgnoreCase(nombre, pageable);
     }
 
     // Método privado para limpieza de código (Mantenibilidad)
