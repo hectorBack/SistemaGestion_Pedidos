@@ -19,4 +19,6 @@ public class PedidoRequestDTO {
 
     @NotEmpty(message = "El pedido debe tener al menos un producto")
     private List<ItemPedidoRequestDTO> items;
+
+    private Long promocionId; // Para saber qué promoción general aplicó
 }

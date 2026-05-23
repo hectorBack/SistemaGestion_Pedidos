@@ -2,17 +2,16 @@ package com.Sistema.Backend.Services.Impl;
 
 import com.Sistema.Backend.Dto.Request.PedidoRequestDTO;
 import com.Sistema.Backend.Dto.Response.PedidoResponseDTO;
-import com.Sistema.Backend.Entity.DetallePedido;
-import com.Sistema.Backend.Entity.EstadoPedido;
-import com.Sistema.Backend.Entity.Pedido;
-import com.Sistema.Backend.Entity.Producto;
+import com.Sistema.Backend.Entity.*;
 import com.Sistema.Backend.Exception.BusinessException;
 import com.Sistema.Backend.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Mapper.PedidoMapper;
 import com.Sistema.Backend.Repository.PedidoRepository;
 import com.Sistema.Backend.Repository.ProductoRepository;
+import com.Sistema.Backend.Repository.PromocionRepository;
 import com.Sistema.Backend.Services.PedidoService;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,15 +28,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class PedidoServiceImpl implements PedidoService {
 
     private final PedidoRepository pedidoRepository;
     private final ProductoRepository productoRepository;
+    private final PromocionRepository promocionRepository;
     private final PedidoMapper pedidoMapper;
 
-    public PedidoServiceImpl(PedidoRepository pedidoRepository, ProductoRepository productoRepository, PedidoMapper pedidoMapper) {
+    public PedidoServiceImpl(PedidoRepository pedidoRepository, ProductoRepository productoRepository, PromocionRepository promocionRepository, PedidoMapper pedidoMapper) {
         this.pedidoRepository = pedidoRepository;
         this.productoRepository = productoRepository;
+        this.promocionRepository = promocionRepository;
         this.pedidoMapper = pedidoMapper;
     }
 
@@ -66,36 +68,62 @@ public class PedidoServiceImpl implements PedidoService {
     private void procesarItemsDelPedido(PedidoRequestDTO request, Pedido pedido) {
         BigDecimal totalAcumulado = BigDecimal.ZERO;
 
+        // 1. Sumar los subtotales de los productos individuales
         for (var itemDto : request.getItems()) {
-            // 1. Buscamos el producto (Podrías optimizar esto con una sola consulta IN si la lista crece mucho)
             Producto producto = productoRepository.findById(itemDto.getProductoId())
                     .orElseThrow(() -> new ResourceNotFoundException("Producto ID " + itemDto.getProductoId() + " no encontrado"));
 
-            // 2. Lógica de validación de negocio adicional (Ejemplo: disponibilidad)
             if (!producto.isDisponible()) {
                 throw new BusinessException("El producto " + producto.getNombre() + " no está disponible actualmente.");
             }
 
-            // 3. Crear detalle (Encapsulamos la creación)
             DetallePedido detalle = crearDetalle(pedido, producto, itemDto);
             pedido.getDetalles().add(detalle);
 
-            // 4. Sumar al total
             BigDecimal subtotal = producto.getPrecio().multiply(BigDecimal.valueOf(itemDto.getCantidad()));
             totalAcumulado = totalAcumulado.add(subtotal);
         }
-        pedido.setTotal(totalAcumulado);
+
+        // 2. Aplicar descuento general si se envió una promoción
+        if (request.getPromocionId() != null && totalAcumulado.compareTo(BigDecimal.ZERO) > 0) {
+
+            Promocion promocion = promocionRepository.findById(request.getPromocionId())
+                    .orElseThrow(() -> new ResourceNotFoundException("La promoción con ID " + request.getPromocionId() + " no existe"));
+
+
+            // 🚨 AQUÍ SUELE ESTAR EL FILTRO DE SEGURIDAD
+            if (promocion.isActiva() && promocion.getProducto() == null) {
+
+                BigDecimal valorDescuento = promocion.getValor();
+
+                if ("PORCENTAJE".equalsIgnoreCase(promocion.getTipoDescuento())) {
+                    BigDecimal porcentaje = valorDescuento.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+                    BigDecimal descuento = totalAcumulado.multiply(porcentaje);
+                    totalAcumulado = totalAcumulado.subtract(descuento);
+                } else if ("FIJO".equalsIgnoreCase(promocion.getTipoDescuento())) {
+                    totalAcumulado = totalAcumulado.subtract(valorDescuento);
+                }
+            }
+
+            if (totalAcumulado.compareTo(BigDecimal.ZERO) < 0) {
+                totalAcumulado = BigDecimal.ZERO;
+            }
+
+            pedido.setTotal(totalAcumulado.setScale(2, java.math.RoundingMode.HALF_UP));
+        }
     }
 
-    private DetallePedido crearDetalle(Pedido pedido, Producto producto, com.Sistema.Backend.Dto.Request.ItemPedidoRequestDTO itemDto) {
-        DetallePedido detalle = new DetallePedido();
-        detalle.setPedido(pedido);
-        detalle.setProducto(producto);
-        detalle.setCantidad(itemDto.getCantidad());
-        detalle.setPrecioUnitario(producto.getPrecio());
-        detalle.setNotasPersonalizacion(itemDto.getNotas());
-        return detalle;
-    }
+        private DetallePedido crearDetalle (Pedido pedido, Producto
+        producto, com.Sistema.Backend.Dto.Request.ItemPedidoRequestDTO itemDto){
+            DetallePedido detalle = new DetallePedido();
+            detalle.setPedido(pedido);
+            detalle.setProducto(producto);
+            detalle.setCantidad(itemDto.getCantidad());
+            detalle.setPrecioUnitario(producto.getPrecio());
+            detalle.setNotasPersonalizacion(itemDto.getNotas());
+            return detalle;
+        }
+
 
     @Override
     public List<PedidoResponseDTO> obtenerPedidosActivos() {
