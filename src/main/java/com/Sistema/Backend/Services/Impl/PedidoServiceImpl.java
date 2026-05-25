@@ -67,6 +67,13 @@ public class PedidoServiceImpl implements PedidoService {
 
     private void procesarItemsDelPedido(PedidoRequestDTO request, Pedido pedido) {
         BigDecimal totalAcumulado = BigDecimal.ZERO;
+        Promocion promocion = null;
+
+        // 1. Validar y cargar la promoción si viene en el DTO
+        if (request.getPromocionId() != null) {
+            promocion = promocionRepository.findById(request.getPromocionId())
+                    .orElseThrow(() -> new ResourceNotFoundException("La promoción con ID " + request.getPromocionId() + " no existe"));
+        }
 
         // 1. Sumar los subtotales de los productos individuales
         for (var itemDto : request.getItems()) {
@@ -78,39 +85,56 @@ public class PedidoServiceImpl implements PedidoService {
             }
 
             DetallePedido detalle = crearDetalle(pedido, producto, itemDto);
-            pedido.getDetalles().add(detalle);
 
-            BigDecimal subtotal = producto.getPrecio().multiply(BigDecimal.valueOf(itemDto.getCantidad()));
-            totalAcumulado = totalAcumulado.add(subtotal);
-        }
+            BigDecimal precioAplicado = producto.getPrecio();
 
-        // 2. Aplicar descuento general si se envió una promoción
-        if (request.getPromocionId() != null && totalAcumulado.compareTo(BigDecimal.ZERO) > 0) {
+            // 🌟 CORRECCIÓN AQUÍ: Validamos usando la existencia del producto de manera segura
+            if (promocion != null && promocion.isActiva() && promocion.getProducto() != null) {
 
-            Promocion promocion = promocionRepository.findById(request.getPromocionId())
-                    .orElseThrow(() -> new ResourceNotFoundException("La promoción con ID " + request.getPromocionId() + " no existe"));
+                // Obtenemos el ID de forma segura (funciona incluso con Proxies de Hibernate)
+                Long productoPromoId = promocion.getProducto().getId();
 
+                if (productoPromoId.equals(producto.getId())) {
+                    BigDecimal valorDescuento = promocion.getValor();
 
-            // 🚨 AQUÍ SUELE ESTAR EL FILTRO DE SEGURIDAD
-            if (promocion.isActiva() && promocion.getProducto() == null) {
+                    if ("PORCENTAJE".equalsIgnoreCase(promocion.getTipoDescuento())) {
+                        BigDecimal porcentaje = valorDescuento.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+                        BigDecimal descuento = precioAplicado.multiply(porcentaje);
+                        precioAplicado = precioAplicado.subtract(descuento);
+                    } else if ("FIJO".equalsIgnoreCase(promocion.getTipoDescuento())) {
+                        precioAplicado = precioAplicado.subtract(valorDescuento);
+                    }
 
-                BigDecimal valorDescuento = promocion.getValor();
-
-                if ("PORCENTAJE".equalsIgnoreCase(promocion.getTipoDescuento())) {
-                    BigDecimal porcentaje = valorDescuento.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
-                    BigDecimal descuento = totalAcumulado.multiply(porcentaje);
-                    totalAcumulado = totalAcumulado.subtract(descuento);
-                } else if ("FIJO".equalsIgnoreCase(promocion.getTipoDescuento())) {
-                    totalAcumulado = totalAcumulado.subtract(valorDescuento);
+                    // Seteamos el precio real cobrado ($94.50) en el detalle del pedido
+                    detalle.setPrecioUnitario(precioAplicado.setScale(2, java.math.RoundingMode.HALF_UP));
                 }
             }
 
-            if (totalAcumulado.compareTo(BigDecimal.ZERO) < 0) {
-                totalAcumulado = BigDecimal.ZERO;
-            }
+            pedido.getDetalles().add(detalle);
 
-            pedido.setTotal(totalAcumulado.setScale(2, java.math.RoundingMode.HALF_UP));
+            BigDecimal subtotal = precioAplicado.multiply(BigDecimal.valueOf(itemDto.getCantidad()));
+            totalAcumulado = totalAcumulado.add(subtotal);
         }
+
+        // 3. Aplicar descuento si la promoción era de tipo GENERAL (cuenta completa)
+        if (promocion != null && promocion.isActiva() && promocion.getProducto() == null && totalAcumulado.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal valorDescuento = promocion.getValor();
+
+            if ("PORCENTAJE".equalsIgnoreCase(promocion.getTipoDescuento())) {
+                BigDecimal porcentaje = valorDescuento.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+                BigDecimal descuento = totalAcumulado.multiply(porcentaje);
+                totalAcumulado = totalAcumulado.subtract(descuento);
+            } else if ("FIJO".equalsIgnoreCase(promocion.getTipoDescuento())) {
+                totalAcumulado = totalAcumulado.subtract(valorDescuento);
+            }
+        }
+
+        // 4. Control de seguridad y asignación final
+        if (totalAcumulado.compareTo(BigDecimal.ZERO) < 0) {
+            totalAcumulado = BigDecimal.ZERO;
+        }
+
+        pedido.setTotal(totalAcumulado.setScale(2, java.math.RoundingMode.HALF_UP));
     }
 
         private DetallePedido crearDetalle (Pedido pedido, Producto
