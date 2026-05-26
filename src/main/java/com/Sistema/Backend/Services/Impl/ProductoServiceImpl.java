@@ -123,11 +123,15 @@ public class ProductoServiceImpl implements ProductoService {
     }
 
     @Override
-    public Page<Producto> listarPaginado(String nombre, Pageable pageable) {
-        if (nombre == null || nombre.trim().isEmpty()) {
-            return productoRepository.findAll(pageable);
-        }
-        return productoRepository.findByNombreContainingIgnoreCase(nombre, pageable);
+    public Page<Producto> listarPaginado(String nombre, String categoria, Boolean disponible, Pageable pageable) {
+        // 🌟 Limpieza de filtros: Si vienen vacíos o con espacios, los pasamos como null
+        String nombreFiltro = (nombre != null && !nombre.trim().isEmpty()) ? nombre : null;
+        String categoriaFiltro = (categoria != null && !categoria.trim().isEmpty()) ? categoria : null;
+
+        // El booleano 'disponible' no necesita .trim(), pasa directo (puede ser true, false o null)
+
+        // 🌟 Llamamos al nuevo método avanzado que creamos en el Repository
+        return productoRepository.buscarConFiltrosPaginados(nombreFiltro, categoriaFiltro, disponible, pageable);
     }
 
     // Método privado para limpieza de código (Mantenibilidad)
