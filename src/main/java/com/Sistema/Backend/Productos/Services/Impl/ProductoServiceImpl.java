@@ -1,5 +1,7 @@
 package com.Sistema.Backend.Productos.Services.Impl;
 
+import com.Sistema.Backend.Categorias.Entity.Categoria;
+import com.Sistema.Backend.Categorias.Repository.CategoriaRepository;
 import com.Sistema.Backend.Productos.Dto.Request.ProductoRequestDTO;
 import com.Sistema.Backend.Productos.Dto.Response.ProductoResponseDTO;
 import com.Sistema.Backend.Productos.Entity.Producto;
@@ -22,10 +24,12 @@ import java.util.stream.Collectors;
 public class ProductoServiceImpl implements ProductoService {
 
     private final ProductoRepository productoRepository;
+    private final CategoriaRepository categoriaRepository;
     private final ProductoMapper productoMapper;
 
-    public ProductoServiceImpl(ProductoRepository productoRepository, ProductoMapper productoMapper) {
+    public ProductoServiceImpl(ProductoRepository productoRepository, CategoriaRepository categoriaRepository, ProductoMapper productoMapper) {
         this.productoRepository = productoRepository;
+        this.categoriaRepository = categoriaRepository;
         this.productoMapper = productoMapper;
     }
 
@@ -96,7 +100,7 @@ public class ProductoServiceImpl implements ProductoService {
         // MEJORA: Solo traemos de la DB lo que necesitamos
         return productoRepository.findByDisponibleTrue().stream()
                 .map(productoMapper::toResponseDTO)
-                .collect(Collectors.groupingBy(ProductoResponseDTO::getCategoria));
+                .collect(Collectors.groupingBy(ProductoResponseDTO::getNombreCategoria));
     }
 
     @Override
@@ -141,6 +145,12 @@ public class ProductoServiceImpl implements ProductoService {
         producto.setPrecio(request.getPrecio());
         producto.setDisponible(request.isDisponible());
         producto.setUrlImagen(request.getUrlImagen());
-        producto.setCategoria(request.getCategoria());
+
+        // Buscamos la entidad Categoria usando el categoriaId del DTO
+        if (request.getCategoriaId() != null) {
+            Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
+                    .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + request.getCategoriaId()));
+            producto.setCategoria(categoria);
+        }
     }
 }

@@ -12,6 +12,7 @@ public class ProductoResponseDTO {
     private String descripcion;
     private BigDecimal precio;
     private boolean disponible;
-    private String categoria;
+    private Long categoriaId;
+    private String nombreCategoria;
     private String urlImagen;
 }

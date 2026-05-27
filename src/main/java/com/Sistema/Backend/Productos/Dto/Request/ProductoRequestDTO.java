@@ -21,6 +21,6 @@ public class ProductoRequestDTO {
 
     private boolean disponible = true;
 
-    private String categoria;
+    private Long categoriaId;
     private String urlImagen;
 }
