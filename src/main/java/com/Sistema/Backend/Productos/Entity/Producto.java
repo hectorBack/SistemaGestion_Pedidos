@@ -27,6 +27,9 @@ public class Producto {
 
     private boolean disponible = true;
 
+    @Column(nullable = false)
+    private Boolean activo = true;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "categoria_id", nullable = false)
     @ToString.Exclude

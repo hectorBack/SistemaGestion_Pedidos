@@ -20,6 +20,7 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     // 🌟 REEMPLAZO AVANZADO: Para la tabla del Administrador con múltiples filtros opcionales
     @Query("SELECT p FROM Producto p WHERE " +
+            "p.activo = true AND " + // 🌟 Solo productos que no hayan sido borrados lógicamente
             "(CAST(:nombre AS string) IS NULL OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', CAST(:nombre AS string), '%'))) AND " +
             "(:categoriaId IS NULL OR p.categoria.id = :categoriaId) AND " +
             "(:disponible IS NULL OR p.disponible = :disponible)")

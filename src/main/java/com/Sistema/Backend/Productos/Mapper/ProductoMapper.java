@@ -26,6 +26,7 @@ public class ProductoMapper {
         dto.setDescripcion(producto.getDescripcion());
         dto.setPrecio(producto.getPrecio());
         dto.setDisponible(producto.isDisponible());
+        dto.setActivo(producto.getActivo());
 
         if (producto.getCategoria() != null){
             dto.setCategoriaId(producto.getCategoria().getId());

@@ -72,10 +72,15 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     @Transactional
     public void eliminar(Long id) {
-        if (!productoRepository.existsById(id)) {
-            throw new ResourceNotFoundException("No se puede eliminar: Producto no encontrado");
-        }
-        productoRepository.deleteById(id);
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No se puede eliminar: Producto no encontrado"));
+
+        // Apagamos también la disponibilidad comercial por consistencia de datos
+        producto.setDisponible(false);
+        producto.setActivo(false);
+
+        // Ejecuta el Soft Delete a través de la configuración de Hibernate
+        productoRepository.save(producto);
     }
 
     @Override
