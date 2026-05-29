@@ -127,15 +127,15 @@ public class ProductoServiceImpl implements ProductoService {
     }
 
     @Override
-    public Page<Producto> listarPaginado(String nombre, String categoria, Boolean disponible, Pageable pageable) {
+    public Page<ProductoResponseDTO> listarPaginado(String nombre, Long categoriaId, Boolean disponible, Pageable pageable) {
         // 🌟 Limpieza de filtros: Si vienen vacíos o con espacios, los pasamos como null
         String nombreFiltro = (nombre != null && !nombre.trim().isEmpty()) ? nombre : null;
-        String categoriaFiltro = (categoria != null && !categoria.trim().isEmpty()) ? categoria : null;
 
-        // El booleano 'disponible' no necesita .trim(), pasa directo (puede ser true, false o null)
+        // 🌟 Llamamos al método avanzado del Repository (usando el ID numérico de la categoría)
+        Page<Producto> productosPaginados = productoRepository.buscarConFiltrosPaginados(nombreFiltro, categoriaId, disponible, pageable);
 
-        // 🌟 Llamamos al nuevo método avanzado que creamos en el Repository
-        return productoRepository.buscarConFiltrosPaginados(nombreFiltro, categoriaFiltro, disponible, pageable);
+        // 🌟 ¡LA MAGIA! Convertimos la página de Entidades a una página de DTOs usando tu ProductoMapper
+        return productosPaginados.map(productoMapper::toResponseDTO);
     }
 
     // Método privado para limpieza de código (Mantenibilidad)

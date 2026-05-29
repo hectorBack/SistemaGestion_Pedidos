@@ -32,13 +32,13 @@ public class ProductoController {
 
     // 2. Listar Paginado (Panel Admin)
     @GetMapping
-    public ResponseEntity<Page<Producto>> listarProductos(
+    public ResponseEntity<Page<ProductoResponseDTO>> listarProductos(
             @RequestParam(required = false) String nombre,
-            @RequestParam(required = false) String categoria,
+            @RequestParam(required = false) Long categoriaId,
             @RequestParam(required = false) Boolean disponible,
             @org.springframework.data.web.PageableDefault(size = 8) Pageable pageable) {
 
-        Page<Producto> productos = productoService.listarPaginado(nombre, categoria, disponible, pageable);
+        Page<ProductoResponseDTO> productos = productoService.listarPaginado(nombre, categoriaId, disponible, pageable);
         return ResponseEntity.ok(productos);
     }
 

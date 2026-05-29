@@ -1,6 +1,7 @@
 package com.Sistema.Backend.Categorias.Entity;
 
 import com.Sistema.Backend.Productos.Entity.Producto;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -24,5 +25,6 @@ public class Categoria {
     // Relación de uno a muchos: Una categoría tiene muchos productos
     // mappedBy apunta al atributo 'categoria' en la entidad Producto
     @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Producto> productos;
 }

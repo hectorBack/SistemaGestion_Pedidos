@@ -20,12 +20,12 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     // 🌟 REEMPLAZO AVANZADO: Para la tabla del Administrador con múltiples filtros opcionales
     @Query("SELECT p FROM Producto p WHERE " +
-            "(CAST(:nombre AS string) IS NULL OR p.nombre ILIKE CONCAT('%', CAST(:nombre AS string), '%')) AND " +
-            "(:categoria IS NULL OR p.categoria = :categoria) AND " +
+            "(CAST(:nombre AS string) IS NULL OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', CAST(:nombre AS string), '%'))) AND " +
+            "(:categoriaId IS NULL OR p.categoria.id = :categoriaId) AND " +
             "(:disponible IS NULL OR p.disponible = :disponible)")
     Page<Producto> buscarConFiltrosPaginados(
             @Param("nombre") String nombre,
-            @Param("categoria") String categoria,
+            @Param("categoriaId") Long categoriaId,
             @Param("disponible") Boolean disponible,
             Pageable pageable
     );

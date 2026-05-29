@@ -3,6 +3,8 @@ package com.Sistema.Backend.Productos.Entity;
 import com.Sistema.Backend.Categorias.Entity.Categoria;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 
@@ -27,6 +29,8 @@ public class Producto {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "categoria_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Categoria categoria;
 
     @Column(name = "url_imagen")

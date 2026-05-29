@@ -43,5 +43,5 @@ public interface ProductoService {
     /**
      * Listar paginado
      */
-    Page<Producto> listarPaginado(String nombre, String categoria, Boolean disponible, Pageable pageable);
+    Page<ProductoResponseDTO> listarPaginado(String nombre, Long categoriaId, Boolean disponible, Pageable pageable);
 }
