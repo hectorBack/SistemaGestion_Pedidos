@@ -87,11 +87,16 @@ public class PromocionServiceImpl implements PromocionService {
     }
 
     @Override
-    public Page<Promocion> listarPaginado(String nombre, Pageable pageable) {
-        if(nombre == null || nombre.trim().isEmpty()){
-            return promocionRepository.findAll(pageable);
-        }
-        return promocionRepository.findByNombreContainingIgnoreCase(nombre, pageable);
+    @Transactional(readOnly = true)
+    public Page<PromocionResponseDTO> listarPaginado(String nombre, Boolean activa, Pageable pageable) {
+        // 🌟 Limpieza del filtro de texto
+        String nombreFiltro = (nombre != null && !nombre.trim().isEmpty()) ? nombre : null;
+
+        // 🌟 Ejecutamos la consulta avanzada con filtros opcionales
+        Page<Promocion> promocionesPaginadas = promocionRepository.buscarConFiltrosPaginados(nombreFiltro, activa, pageable);
+
+        // 🌟 Mapeamos la página de entidades a DTOs
+        return promocionesPaginadas.map(promocionMapper::toResponseDTO);
     }
 
     // Método privado para limpieza de código (Mantenibilidad)

@@ -19,5 +19,5 @@ public interface PromocionService {
     /**
      * Listar paginado
      */
-    Page<Promocion> listarPaginado(String nombre, Pageable pageable);
+    Page<PromocionResponseDTO> listarPaginado(String nombre, Boolean activa, Pageable pageable);
 }

@@ -25,13 +25,14 @@ public class PromocionController {
 
     //Listar Paginado
     @GetMapping
-    public ResponseEntity<Page<Promocion>> listarPromociones(
+    public ResponseEntity<Page<PromocionResponseDTO>> listarPromociones(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String nombre
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) Boolean activa
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Promocion> promociones = promocionService.listarPaginado(nombre, pageable);
+        Page<PromocionResponseDTO> promociones = promocionService.listarPaginado(nombre, activa, pageable);
         return ResponseEntity.ok(promociones);
     }
 

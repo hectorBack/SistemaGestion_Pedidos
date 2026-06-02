@@ -20,6 +20,13 @@ public interface PromocionRepository extends JpaRepository<Promocion, Long> {
             "(p.fechaFin IS NULL OR p.fechaFin >= :ahora)")
     List<Promocion> findPromocionesVigentes(@Param("ahora") LocalDateTime ahora);
 
-    // Para la tabla del Administrador con paginación
-    Page<Promocion> findByNombreContainingIgnoreCase(String nombre, Pageable pageable);
+    // 🌟 NUEVA QUERY AVANZADA CON MÚLTIPLES FILTROS OPCIONALES
+    @Query("SELECT p FROM Promocion p WHERE " +
+            "(CAST(:nombre AS string) IS NULL OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', CAST(:nombre AS string), '%'))) AND " +
+            "(:activa IS NULL OR p.activa = :activa)")
+    Page<Promocion> buscarConFiltrosPaginados(
+            @Param("nombre") String nombre,
+            @Param("activa") Boolean activa, // 🌟 Filtro por estado añadido
+            Pageable pageable
+    );
 }
