@@ -2,6 +2,7 @@ package com.Sistema.Backend.Pedidos.Repository;
 
 import com.Sistema.Backend.Pedidos.Entity.EstadoPedido;
 import com.Sistema.Backend.Pedidos.Entity.Pedido;
+import com.Sistema.Backend.Reportes.Dto.VentasPorPeriodoDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,4 +41,25 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
             @Param("inicio") LocalDateTime inicio,
             @Param("fin") LocalDateTime fin,
             Pageable pageable);
+
+    // Filtrar sumas solo de pedidos entregados/completados
+    @Query("SELECT SUM(p.total) FROM Pedido p WHERE p.fechaCreacion BETWEEN :inicio AND :fin AND p.estado = 'ENTREGADO'")
+    BigDecimal sumarIngresosExitosos(LocalDateTime inicio, LocalDateTime fin);
+
+    @Query("SELECT COUNT(p) FROM Pedido p WHERE p.fechaCreacion BETWEEN :inicio AND :fin AND p.estado = 'CANCELADO'")
+    long contarPedidosCancelados(LocalDateTime inicio, LocalDateTime fin);
+
+    // Contar y sumar solo pedidos que sí se completaron con éxito
+    @Query("SELECT COUNT(p) FROM Pedido p WHERE p.fechaCreacion BETWEEN :inicio AND :fin AND p.estado = 'ENTREGADO'")
+    long contarPedidosExitosos(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
+
+    // Agrupación cronológica diaria para la gráfica de líneas
+    @Query(value = "SELECT TO_CHAR(p.fecha_creacion, 'YYYY-MM-DD') AS etiquetaPeriodo, " +
+            "SUM(p.total) AS totalVentas, " +
+            "COUNT(p.id) AS cantidadPedidos " +
+            "FROM pedidos p " +
+            "WHERE p.fecha_creacion BETWEEN :inicio AND :fin AND p.estado = 'ENTREGADO' " +
+            "GROUP BY TO_CHAR(p.fecha_creacion, 'YYYY-MM-DD') " +
+            "ORDER BY etiquetaPeriodo ASC", nativeQuery = true)
+    List<Object[]> obtenerVentasDiariasNativo(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
 }
