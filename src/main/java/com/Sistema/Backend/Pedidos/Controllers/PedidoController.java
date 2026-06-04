@@ -82,4 +82,10 @@ public class PedidoController {
         return ResponseEntity.ok(pedidoService.obtenerPedidosFiltrados(estado, inicio, fin, pageable));
     }
 
+    @GetMapping("/codigo/{codigo}")
+    public ResponseEntity<PedidoResponseDTO> obtenerPorCodigo(@PathVariable String codigo) {
+        PedidoResponseDTO response = pedidoService.buscarPorCodigo(codigo);
+        return ResponseEntity.ok(response);
+    }
+
 }

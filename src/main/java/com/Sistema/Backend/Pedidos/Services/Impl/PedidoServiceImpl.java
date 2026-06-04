@@ -239,4 +239,12 @@ public class PedidoServiceImpl implements PedidoService {
         // Convertimos el Page de Entidades a Page de DTOs
         return pedidosPage.map(pedidoMapper::toResponseDTO);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PedidoResponseDTO buscarPorCodigo(String codigo) {
+        return pedidoRepository.findByCodigo(codigo)
+                .map(pedidoMapper::toResponseDTO) // Convierte elegantemente de Entidad a DTO
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con el código: " + codigo));
+    }
 }

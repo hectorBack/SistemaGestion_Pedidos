@@ -10,6 +10,7 @@ import java.util.List;
 public class PedidoResponseDTO {
 
     private Long id;
+    private String codigo;
     private String nombreCliente;
     private String whatsappFinal;
     private BigDecimal total;

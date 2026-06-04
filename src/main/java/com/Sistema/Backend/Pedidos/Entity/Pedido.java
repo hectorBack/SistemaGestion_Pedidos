@@ -17,6 +17,9 @@ public class Pedido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "codigo", nullable = false, unique = true, length = 20)
+    private String codigo;
+
     @Column(name = "whatsapp_final", nullable = false, length = 10)
     private String whatsappFinal;
 
@@ -40,6 +43,18 @@ public class Pedido {
     @PrePersist
     protected void onCreate() {
         this.fechaCreacion = LocalDateTime.now();
+
+        if (this.codigo == null) {
+            this.codigo = generarCodigoUnico();
+        }
+    }
+
+    private String generarCodigoUnico() {
+        // Ejemplo resultado: PED-5A2C8
+        String uuidCorto = java.util.UUID.randomUUID().toString()
+                .substring(0, 5)
+                .toUpperCase();
+        return "PED-" + uuidCorto;
     }
 }
 

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
@@ -62,4 +63,6 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
             "GROUP BY TO_CHAR(p.fecha_creacion, 'YYYY-MM-DD') " +
             "ORDER BY etiquetaPeriodo ASC", nativeQuery = true)
     List<Object[]> obtenerVentasDiariasNativo(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
+
+    Optional<Pedido> findByCodigo(String codigo);
 }

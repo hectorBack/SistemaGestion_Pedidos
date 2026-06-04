@@ -58,4 +58,9 @@ public interface PedidoService {
             LocalDate fechaInicio,
             LocalDate fechaFin,
             Pageable pageable);
+
+    /**
+     * Filtro avanzado: Por codigo
+     */
+    PedidoResponseDTO buscarPorCodigo(String codigo);
 }
