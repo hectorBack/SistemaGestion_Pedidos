@@ -2,12 +2,17 @@ package com.Sistema.Backend.Pagos.Controller;
 
 import com.Sistema.Backend.Pagos.Dto.Request.PagoRequestDTO;
 import com.Sistema.Backend.Pagos.Dto.Response.PagoResponseDTO;
+import com.Sistema.Backend.Pagos.Entity.MetodoPago;
 import com.Sistema.Backend.Pagos.Services.PagoService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -42,9 +47,13 @@ public class PagoController {
     }
 
     // 🌟 4. Listar todos los pagos (Útil para reportería o paneles de administración)
-    @GetMapping
-    public ResponseEntity<List<PagoResponseDTO>> obtenerTodos() {
-        List<PagoResponseDTO> response = pagoService.obtenerTodos();
-        return ResponseEntity.ok(response);
+    @GetMapping("/filtrar")
+    public ResponseEntity<Page<PagoResponseDTO>> filtrarPagos(
+            @RequestParam(required = false) MetodoPago metodo,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin,
+            Pageable pageable) {
+
+        return ResponseEntity.ok(pagoService.obtenerPagosFiltrados(metodo, inicio, fin, pageable));
     }
 }
