@@ -10,6 +10,7 @@ import com.Sistema.Backend.Productos.Mapper.ProductoMapper;
 import com.Sistema.Backend.Productos.Repository.ProductoRepository;
 import com.Sistema.Backend.Productos.Services.ProductoService;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class ProductoServiceImpl implements ProductoService {
 
     private final ProductoRepository productoRepository;
@@ -37,24 +39,35 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     @Transactional
     public ProductoResponseDTO crear(ProductoRequestDTO request) {
+        log.info("Iniciando creación del producto: '{}'", request.getNombre());
         Producto producto = productoMapper.toEntity(request);
-        return productoMapper.toResponseDTO(productoRepository.save(producto));
+        ProductoResponseDTO resultado = productoMapper.toResponseDTO(productoRepository.save(producto));
+        log.info("Producto creado exitosamente con ID: {}", resultado.getId());
+        return resultado;
     }
 
     @Override
     @Transactional
     public ProductoResponseDTO actualizar(Long id, ProductoRequestDTO request) {
+        log.info("Solicitud para actualizar producto ID: {}", id);
         // Usamos tu nueva excepción personalizada
         Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto con ID " + id + " no encontrado"));
+                .orElseThrow(() -> {
+                    log.error("Fallo al actualizar: Producto ID {} no encontrado", id);
+                    return new ResourceNotFoundException("Producto con ID " + id + " no encontrado");
+                });
 
         actualizarCampos(producto, request);
 
-        return productoMapper.toResponseDTO(productoRepository.save(producto));
+        ProductoResponseDTO resultado = productoMapper.toResponseDTO(productoRepository.save(producto));
+        log.info("Campos del producto ID {} actualizados correctamente", id);
+        return resultado;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductoResponseDTO> listarTodos() {
+        log.info("Solicitando listado completo de todos los productos de la base de datos");
         return productoRepository.findAll().stream()
                 .map(productoMapper::toResponseDTO)
                 .collect(Collectors.toList());
@@ -62,7 +75,9 @@ public class ProductoServiceImpl implements ProductoService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductoResponseDTO> listarDisponibles() {
+        log.info("Filtrando catálogo comercial: Obteniendo productos disponibles para la venta");
         // MEJORA: Filtrar en DB, no en Java
         return productoRepository.findByDisponibleTrue().stream()
                 .map(productoMapper::toResponseDTO)
@@ -72,8 +87,13 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     @Transactional
     public void eliminar(Long id) {
+        log.info("Solicitud de baja lógica e indisponibilidad para el producto ID: {}", id);
+
         Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("No se puede eliminar: Producto no encontrado"));
+                .orElseThrow(() -> {
+                    log.error("Fallo al eliminar: Producto ID {} inexistente", id);
+                    return new ResourceNotFoundException("No se puede eliminar: Producto no encontrado");
+                });
 
         // Apagamos también la disponibilidad comercial por consistencia de datos
         producto.setDisponible(false);
@@ -81,26 +101,38 @@ public class ProductoServiceImpl implements ProductoService {
 
         // Ejecuta el Soft Delete a través de la configuración de Hibernate
         productoRepository.save(producto);
+        log.info("Soft delete aplicado exitosamente al producto ID: {}", id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProductoResponseDTO obtenerPorId(Long id) {
+        log.info("Buscando producto por ID: {}", id);
         return productoRepository.findById(id)
                 .map(productoMapper::toResponseDTO)
-                .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado"));
+                .orElseThrow(() -> {
+                    log.error("Error: No se encontró el producto ID: {}", id);
+                    return new EntityNotFoundException("Producto no encontrado");
+                });
     }
 
     @Override
     @Transactional
     public void cambiarDisponibilidad(Long id, boolean disponible) {
+        log.info("Modificación rápida de disponibilidad comercial para producto ID: {} -> disponible: {}", id, disponible);
         Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado"));
+                .orElseThrow(() -> {
+                    log.error("No se pudo cambiar estado: Producto ID {} no encontrado", id);
+                    return new EntityNotFoundException("Producto no encontrado");
+                });
 
         producto.setDisponible(disponible);
         productoRepository.save(producto);
+        log.info("Estado de disponibilidad del producto ID {} guardado con éxito", id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, List<ProductoResponseDTO>> listarMenuPorCategoria() {
         // MEJORA: Solo traemos de la DB lo que necesitamos
         return productoRepository.findByDisponibleTrue().stream()
@@ -109,7 +141,9 @@ public class ProductoServiceImpl implements ProductoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductoResponseDTO> buscarPorNombre(String nombre) {
+        log.info("Generando menú estructurado por categorías para la visualización del cliente");
         // MEJORA: Búsqueda mediante query de base de datos
         return productoRepository.findByNombreContainingIgnoreCase(nombre).stream()
                 .map(productoMapper::toResponseDTO)
@@ -119,6 +153,7 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     @Transactional
     public void actualizarPreciosMasivo(double porcentaje) {
+        log.warn("EJECUCIÓN DE PROCESO MASIVO: Actualizando precios de todo el catálogo en un {}%", porcentaje);
         // Ejemplo: si porcentaje es 10, multiplicamos por 1.10
         BigDecimal factor = BigDecimal.valueOf(1 + (porcentaje / 100));
 
@@ -129,14 +164,18 @@ public class ProductoServiceImpl implements ProductoService {
         });
 
         productoRepository.saveAll(productos);
+        log.info("Precios masivos actualizados con éxito. Total de productos afectados: {}", productos.size());
     }
 
     @Override
     public Page<ProductoResponseDTO> listarPaginado(String nombre, Long categoriaId, Boolean disponible, Pageable pageable) {
-        // 🌟 Limpieza de filtros: Si vienen vacíos o con espacios, los pasamos como null
+        log.info("Búsqueda paginada avanzada de productos - Filtros -> Nombre: '{}', CategoriaID: {}, Disponible: {} | Pág: {}, Tamaño: {}",
+                nombre, categoriaId, disponible, pageable.getPageNumber(), pageable.getPageSize());
+
+        // Limpieza de filtros: Si vienen vacíos o con espacios, los pasamos como null
         String nombreFiltro = (nombre != null && !nombre.trim().isEmpty()) ? nombre : null;
 
-        // 🌟 Llamamos al método avanzado del Repository (usando el ID numérico de la categoría)
+        // Llamamos al método avanzado del Repository (usando el ID numérico de la categoría)
         Page<Producto> productosPaginados = productoRepository.buscarConFiltrosPaginados(nombreFiltro, categoriaId, disponible, pageable);
 
         // 🌟 ¡LA MAGIA! Convertimos la página de Entidades a una página de DTOs usando tu ProductoMapper
@@ -154,7 +193,10 @@ public class ProductoServiceImpl implements ProductoService {
         // Buscamos la entidad Categoria usando el categoriaId del DTO
         if (request.getCategoriaId() != null) {
             Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
-                    .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + request.getCategoriaId()));
+                    .orElseThrow(() -> {
+                        log.error("Fallo de integridad: Categoría ID {} no asociada al sistema", request.getCategoriaId());
+                        return new RuntimeException("Categoría no encontrada con ID: " + request.getCategoriaId());
+                    });
             producto.setCategoria(categoria);
         }
     }
