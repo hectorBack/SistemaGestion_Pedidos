@@ -20,10 +20,16 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     @Query(value = "SELECT * FROM categorias WHERE id = :id", nativeQuery = true)
     Optional<Categoria> encontrarPorIdNativo(@Param("id") Long id);
 
-    // 🌟 QUERY NATIVA PAGINADA: Se salta el @SQLRestriction para que el administrador pueda listar todo el historial
+    // QUERY NATIVA PAGINADA: Se salta el @SQLRestriction para que el administrador pueda listar todo el historial
     @Query(value = "SELECT * FROM categorias c WHERE " +
-            "(:nombre IS NULL OR c.nombre ILIKE CONCAT('%', CAST(:nombre AS VARCHAR), '%'))",
-            countQuery = "SELECT count(*) FROM categorias c WHERE (:nombre IS NULL OR c.nombre ILIKE CONCAT('%', CAST(:nombre AS VARCHAR), '%'))",
+            "(:nombre IS NULL OR c.nombre ILIKE CONCAT('%', CAST(:nombre AS VARCHAR), '%')) AND " +
+            "(CAST(:activo AS BOOLEAN) IS NULL OR c.activo = CAST(:activo AS BOOLEAN))",
+            countQuery = "SELECT count(*) FROM categorias c WHERE " +
+                    "(:nombre IS NULL OR c.nombre ILIKE CONCAT('%', CAST(:nombre AS VARCHAR), '%')) AND " +
+                    "(CAST(:activo AS BOOLEAN) IS NULL OR c.activo = CAST(:activo AS BOOLEAN))",
             nativeQuery = true)
-    Page<Categoria> buscarTodasParaAdminPaginado(@Param("nombre") String nombre, Pageable pageable);
+    Page<Categoria> buscarTodasParaAdminPaginado(
+            @Param("nombre") String nombre,
+            @Param("activo") Boolean activo,
+            Pageable pageable);
 }
