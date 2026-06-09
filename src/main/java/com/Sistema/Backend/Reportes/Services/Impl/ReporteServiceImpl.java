@@ -19,6 +19,7 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class ReporteServiceImpl implements ReporteService {
 
     private final PedidoRepository pedidoRepository;
@@ -54,6 +56,9 @@ public class ReporteServiceImpl implements ReporteService {
         long pedidosCancelados = pedidoRepository.contarPedidosCancelados(inicio, fin);
         long totalProductosVendidos = obtenerTotalProductosVendidos(inicio, fin);
 
+        log.debug("Métricas base recuperadas - Exitosos: {}, Cancelados: {}, Productos: {}",
+                pedidosExitosos, pedidosCancelados, totalProductosVendidos);
+
         // 2. Obtener y calcular métricas financieras
         BigDecimal ingresosTotales = obtenerIngresosTotales(inicio, fin);
         BigDecimal ticketPromedio = calcularTicketPromedio(ingresosTotales, pedidosExitosos);
@@ -62,6 +67,8 @@ public class ReporteServiceImpl implements ReporteService {
         List<String> topProductos = detalleRepository.encontrarProductosMasVendidos(inicio, fin, PageRequest.of(0, 5));
         List<VentasPorCategoriaDTO> ventasPorCategoria = obtenerMapeoVentasPorCategoria(inicio, fin);
         List<VentasPorPeriodoDTO> ventasCronologicas = obtenerMapeoVentasCronologicas(inicio, fin);
+
+        log.info("Estructura de reporte consolidada con éxito para el periodo solicitado");
 
         // 4. Construir y retornar la carga útil (Payload) estructurada
         return new ReporteVentasDTO(
@@ -112,6 +119,7 @@ public class ReporteServiceImpl implements ReporteService {
     @Override
     @Transactional(readOnly = true)
     public ByteArrayInputStream exportarReporteExcel(LocalDateTime inicio, LocalDateTime fin) {
+        log.info("Solicitud para exportar Reporte Ejecutivo a formato MS Excel (.xlsx)");
         ReporteVentasDTO datos = generarResumenVentas(inicio, fin);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -154,9 +162,11 @@ public class ReporteServiceImpl implements ReporteService {
             sheet.autoSizeColumn(1);
 
             workbook.write(out);
+            log.info("Archivo Excel binario generado de forma correcta. Tamaño del stream: {} bytes", out.size());
             return new ByteArrayInputStream(out.toByteArray());
 
         } catch (IOException e) {
+            log.error("Error crítico durante la escritura o compilación del libro Excel POI", e);
             throw new RuntimeException("Error al generar el archivo Excel de reportes", e);
         }
     }
@@ -205,6 +215,7 @@ public class ReporteServiceImpl implements ReporteService {
     @Override
     @Transactional(readOnly = true)
     public ByteArrayInputStream exportarReportePDF(LocalDateTime inicio, LocalDateTime fin) {
+        log.info("Solicitud para generar y exportar Reporte Ejecutivo a formato PDF");
         ReporteVentasDTO datos = generarResumenVentas(inicio, fin);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         java.text.NumberFormat formatMoneda = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("es", "MX"));
@@ -252,8 +263,10 @@ public class ReporteServiceImpl implements ReporteService {
             document.add(table);
             document.close();
 
+            log.info("Documento PDF renderizado de forma óptima en el buffer de salida");
             return new ByteArrayInputStream(out.toByteArray());
         } catch (com.lowagie.text.DocumentException e) {
+            log.error("Error grave en la manipulación estructural de iText/OpenPDF", e);
             throw new RuntimeException("Error construyendo el documento analítico en PDF", e);
         }
     }
