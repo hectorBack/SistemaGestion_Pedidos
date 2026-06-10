@@ -188,7 +188,11 @@ public class ProductoServiceImpl implements ProductoService {
         producto.setDescripcion(request.getDescripcion());
         producto.setPrecio(request.getPrecio());
         producto.setDisponible(request.isDisponible());
-        producto.setUrlImagen(request.getUrlImagen());
+
+        // MEJORA: Solo actualiza la URL si el DTO trae una nueva de Cloudinary
+        if (request.getUrlImagen() != null && !request.getUrlImagen().trim().isEmpty()) {
+            producto.setUrlImagen(request.getUrlImagen());
+        }
 
         // Buscamos la entidad Categoria usando el categoriaId del DTO
         if (request.getCategoriaId() != null) {
