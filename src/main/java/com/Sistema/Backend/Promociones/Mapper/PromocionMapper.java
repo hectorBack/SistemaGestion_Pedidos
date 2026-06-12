@@ -53,6 +53,7 @@ public class PromocionMapper {
         if (entity.getProducto() != null) {
             dto.setProductoId(entity.getProducto().getId());
             dto.setNombreProducto(entity.getProducto().getNombre());
+            dto.setPrecioProducto(entity.getProducto().getPrecio());
         }
 
         return dto;

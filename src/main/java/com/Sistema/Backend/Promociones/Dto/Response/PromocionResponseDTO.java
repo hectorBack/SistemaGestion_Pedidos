@@ -18,4 +18,5 @@ public class PromocionResponseDTO {
     private boolean activa;
     private Long productoId; // Solo enviamos el ID del producto para el frontend
     private String nombreProducto;
+    private BigDecimal precioProducto;
 }
