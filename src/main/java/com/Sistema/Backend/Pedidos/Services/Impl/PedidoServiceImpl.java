@@ -175,7 +175,9 @@ public class PedidoServiceImpl implements PedidoService {
         }
 
         pedido.setEstado(nuevoEstado);
-        return pedidoMapper.toResponseDTO(pedidoRepository.save(pedido));
+        // Cambiamos save() por saveAndFlush() para forzar el PreUpdate antes de mapear al DTO
+        Pedido pedidoActualizado = pedidoRepository.saveAndFlush(pedido);
+        return pedidoMapper.toResponseDTO(pedidoActualizado);
     }
 
     @Override
@@ -210,6 +212,7 @@ public class PedidoServiceImpl implements PedidoService {
                 .orElseThrow(() -> new EntityNotFoundException("No se puede cancelar: Pedido no encontrado"));
 
         pedido.setEstado(EstadoPedido.CANCELADO);
+        pedido.setFechaActualizacion(LocalDateTime.now()); // Forzamos de forma explícita por seguridad
         pedidoRepository.save(pedido);
     }
 

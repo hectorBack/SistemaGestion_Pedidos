@@ -35,6 +35,9 @@ public class Pedido {
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
+    @Column(name = "fecha_actualizacion")
+    private LocalDateTime fechaActualizacion;
+
     // Relación con los detalles: un pedido tiene muchos productos
     // cascade = CascadeType.ALL permite guardar el pedido y sus detalles en un solo paso
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -55,6 +58,11 @@ public class Pedido {
                 .substring(0, 5)
                 .toUpperCase();
         return "PED-" + uuidCorto;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.fechaActualizacion = LocalDateTime.now();
     }
 }
 

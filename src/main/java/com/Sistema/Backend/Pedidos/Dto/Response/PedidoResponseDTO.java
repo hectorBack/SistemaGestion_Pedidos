@@ -16,5 +16,6 @@ public class PedidoResponseDTO {
     private BigDecimal total;
     private String estado;
     private LocalDateTime fechaCreacion;
+    private LocalDateTime fechaActualizacion;
     private List<ItemResponseDTO> detalles;
 }

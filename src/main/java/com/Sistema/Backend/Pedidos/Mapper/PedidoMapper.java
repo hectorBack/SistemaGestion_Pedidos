@@ -22,6 +22,7 @@ public class PedidoMapper {
         dto.setTotal(pedido.getTotal());
         dto.setEstado(pedido.getEstado().name());
         dto.setFechaCreacion(pedido.getFechaCreacion());
+        dto.setFechaActualizacion(pedido.getFechaActualizacion());
 
         dto.setDetalles(pedido.getDetalles().stream()
                 .map(this::toItemResponseDTO)
