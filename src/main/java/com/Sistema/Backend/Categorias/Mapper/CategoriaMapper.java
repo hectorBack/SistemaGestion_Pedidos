@@ -18,6 +18,13 @@ public class CategoriaMapper {
         dto.setNombre(categoria.getNombre());
         dto.setActivo(categoria.getActivo());
 
+        // Mapea la cantidad de productos asociados de forma dinámica
+        if (categoria.getProductos() != null) {
+            dto.setCantidadProductos(categoria.getProductos().size());
+        } else {
+            dto.setCantidadProductos(0);
+        }
+
         return dto;
     }
 

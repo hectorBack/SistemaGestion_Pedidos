@@ -84,38 +84,69 @@ public class CategoriaServiceImpl implements CategoriaService {
     }
 
     @Override
+    @Transactional
     public CategoriaResponseDTO actualizar(Long id, CategoriaRequestDTO dto) {
         log.info("Solicitud para actualizar categoría ID: {} con nuevos datos de nombre: '{}'", id, dto.getNombre());
-        // Buscamos usando una query nativa o bypass para poder editar incluso si estuviera inactiva
-        Categoria categoria = categoriaRepository.encontrarPorIdNativo(id)
-                .orElseThrow(() -> {
-                    log.error("Fallo al actualizar: No se encontró la categoría ID: {}", id);
-                    return new RuntimeException("Categoría no encontrada");
-                });
 
+        Categoria categoria = categoriaRepository.encontrarPorIdNativo(id)
+                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+
+        // Validar unicidad de nombre si cambió...
         if (!categoria.getNombre().equalsIgnoreCase(dto.getNombre()) &&
                 categoriaRepository.existsByNombreIgnoreCase(dto.getNombre())) {
-            log.error("Conflict de nombres: Intentando renombrar a '{}', pero ese nombre ya pertenece a otra fila", dto.getNombre());
             throw new RuntimeException("Ya existe otra categoría con el nombre: " + dto.getNombre());
         }
 
+        // 🛠️ BLINDAJE: Si el DTO trae 'activo' en true, o si viene null pero el negocio dicta que al editar se puede reactivar
+        // Forzamos la reactivación basándonos en lo que el DTO solicita explícitamente
+        if (dto.getActivo() != null && dto.getActivo()) {
+            if (Boolean.FALSE.equals(categoria.getActivo())) {
+                log.info("🌟 FORZANDO REACTIVACIÓN: Cambiando estado de categoría ID: {} a TRUE", id);
+                categoria.setActivo(true);
+
+                if (categoria.getProductos() != null) {
+                    categoria.getProductos().forEach(producto -> {
+                        producto.setActivo(true);
+                        log.info("-> Producto ID: {} reactivado en cascada", producto.getId());
+                    });
+                }
+            }
+        } else if (dto.getActivo() != null && !dto.getActivo()) {
+            // Por si en el modal desmarcan el checkbox manualmente en lugar de usar el botón eliminar
+            categoria.setActivo(false);
+        }
+
+        // Aplicar el resto de cambios del DTO (Nombre)
         categoriaMapper.updateEntityFromDTO(dto, categoria);
+
         log.info("Categoría ID: {} modificada con éxito", id);
         return categoriaMapper.toResponseDTO(categoriaRepository.save(categoria));
     }
 
     @Override
     public void eliminar(Long id) {
-        log.info("Solicitud de baja lógica (Soft Delete) para la categoría ID: {}", id);
+        log.info("Solicitud de baja lógica (Soft Delete) en cascada para la categoría ID: {}", id);
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Fallo al eliminar: Categoría ID: {} no existe o ya cuenta con estado inactivo", id);
-                    return new RuntimeException("Categoría no encontrada o ya está inactiva.");
+                    log.error("Fallo al eliminar: Categoría ID: {} no existe", id);
+                    return new RuntimeException("Categoría no encontrada.");
                 });
 
-        // SOFT DELETE: Cambiamos el estado flag a falso en lugar de borrar la fila
+        // 1. Cambiamos el estado de la categoría a falso
         categoria.setActivo(false);
+
+        // 2. Apagamos en cascada todos los productos asociados para mantener la consistencia del menú
+        if (categoria.getProductos() != null) {
+            categoria.getProductos().forEach(producto -> {
+                if (Boolean.TRUE.equals(producto.getActivo())) {
+                    producto.setActivo(false);
+                    log.info("-> Soft Delete aplicado en cascada al producto ID: {} ('{}')",
+                            producto.getId(), producto.getNombre());
+                }
+            });
+        }
+
         categoriaRepository.save(categoria);
-        log.info("Soft Delete aplicado correctamente a la categoría ID: {}", id);
+        log.info("Soft Delete y cascada aplicados correctamente a la categoría ID: {}", id);
     }
 }

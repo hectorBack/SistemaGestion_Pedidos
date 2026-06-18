@@ -1,8 +1,12 @@
 package com.Sistema.Backend.Categorias.Dto.Request;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+
+@Getter
+@Setter
 public class CategoriaRequestDTO {
     private String nombre;
     private Boolean activo;

@@ -2,15 +2,15 @@ package com.Sistema.Backend.Productos.Entity;
 
 import com.Sistema.Backend.Categorias.Entity.Categoria;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "productos")
-@Data
+@Getter
+@Setter
+@ToString
 public class Producto {
 
     @Id
