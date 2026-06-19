@@ -3,12 +3,17 @@ package com.Sistema.Backend.Pedidos.Entity;
 import com.Sistema.Backend.Productos.Entity.Producto;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "detalle_pedidos")
-@Data
+@Getter
+@Setter
+@ToString
 public class DetallePedido {
 
     @Id

@@ -1,10 +1,13 @@
 package com.Sistema.Backend.Pedidos.Dto.Response;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@Setter
 public class ItemResponseDTO {
 
     private String nombreProducto;

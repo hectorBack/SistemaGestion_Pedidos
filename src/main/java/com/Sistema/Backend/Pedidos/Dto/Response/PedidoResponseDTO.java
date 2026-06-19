@@ -1,12 +1,15 @@
 package com.Sistema.Backend.Pedidos.Dto.Response;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
+@Setter
+@Getter
 public class PedidoResponseDTO {
 
     private Long id;

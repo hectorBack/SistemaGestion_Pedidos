@@ -3,10 +3,13 @@ package com.Sistema.Backend.Pagos.Dto.Request;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@Setter
 public class PagoRequestDTO {
 
     @NotNull(message = "El ID del pedido es obligatorio")

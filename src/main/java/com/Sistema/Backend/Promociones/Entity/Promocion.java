@@ -3,13 +3,18 @@ package com.Sistema.Backend.Promociones.Entity;
 import com.Sistema.Backend.Productos.Entity.Producto;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "promociones")
-@Data
+@Setter
+@Getter
+@ToString
 public class Promocion {
 
     @Id

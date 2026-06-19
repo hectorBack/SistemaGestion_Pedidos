@@ -3,6 +3,9 @@ package com.Sistema.Backend.Pagos.Entity;
 import com.Sistema.Backend.Pedidos.Entity.Pedido;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -10,7 +13,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "pagos")
-@Data
+@Setter
+@Getter
+@ToString
 public class Pago {
 
     @Id

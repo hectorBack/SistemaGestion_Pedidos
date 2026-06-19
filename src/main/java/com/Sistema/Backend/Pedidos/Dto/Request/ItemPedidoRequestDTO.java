@@ -3,8 +3,11 @@ package com.Sistema.Backend.Pedidos.Dto.Request;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class ItemPedidoRequestDTO {
 
     @NotNull(message = "El ID del producto es obligatorio")

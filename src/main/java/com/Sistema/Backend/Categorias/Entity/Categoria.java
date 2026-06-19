@@ -11,8 +11,6 @@ import java.util.List;
 @Table(name = "categorias")
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @ToString(exclude = "productos")
 public class Categoria {
 
