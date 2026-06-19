@@ -1,5 +1,6 @@
 package com.Sistema.Backend.Productos.Services;
 
+import com.Sistema.Backend.Categorias.Dto.MenuCategoriaDTO;
 import com.Sistema.Backend.Productos.Dto.Request.ProductoRequestDTO;
 import com.Sistema.Backend.Productos.Dto.Response.ProductoResponseDTO;
 import com.Sistema.Backend.Productos.Entity.Producto;
@@ -44,4 +45,6 @@ public interface ProductoService {
      * Listar paginado
      */
     Page<ProductoResponseDTO> listarPaginado(String nombre, Long categoriaId, Boolean disponible, Pageable pageable);
+
+    List<MenuCategoriaDTO> obtenerMenuDigital();
 }

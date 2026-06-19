@@ -30,4 +30,7 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
             @Param("disponible") Boolean disponible,
             Pageable pageable
     );
+
+    @Query("SELECT p FROM Producto p WHERE p.activo = true AND p.categoria.activo = true ORDER BY p.categoria.orden ASC, p.nombre ASC")
+    List<Producto> findProductosParaMenu();
 }

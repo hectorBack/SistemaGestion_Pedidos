@@ -11,4 +11,5 @@ public class CategoriaResponseDTO {
     private String nombre;
     private Boolean activo;
     private Integer cantidadProductos;
+    private Integer orden;
 }

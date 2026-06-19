@@ -149,4 +149,30 @@ public class CategoriaServiceImpl implements CategoriaService {
         categoriaRepository.save(categoria);
         log.info("Soft Delete y cascada aplicados correctamente a la categoría ID: {}", id);
     }
+
+    @Override
+    @Transactional
+    public void actualizarOrden(List<Long> idsOrdenados) {
+        if (idsOrdenados == null || idsOrdenados.isEmpty()) {
+            log.warn("Se recibió una lista de ordenamiento vacía o nula");
+            return;
+        }
+
+        log.info("Actualizando el orden de {} categorías en ráfaga masiva", idsOrdenados.size());
+
+        // Recorremos los IDs basándonos en su posición en el arreglo enviado por Vue
+        for (int i = 0; i < idsOrdenados.size(); i++) {
+            Long id = idsOrdenados.get(i);
+            int nuevoOrden = i; // La posición en el índice (0, 1, 2...) será su prioridad
+
+            // Buscamos usando el bypass nativo que ya tienes configurado
+            categoriaRepository.encontrarPorIdNativo(id).ifPresent(categoria -> {
+                categoria.setOrden(nuevoOrden);
+                categoriaRepository.save(categoria);
+                log.debug("-> Categoría ID: {} fijada en orden: {}", id, nuevoOrden);
+            });
+        }
+
+        log.info("Sincronización de ordenamiento dinámico finalizada con éxito");
+    }
 }

@@ -16,4 +16,6 @@ public interface CategoriaService {
     CategoriaResponseDTO crear(CategoriaRequestDTO dto);
     CategoriaResponseDTO actualizar(Long id, CategoriaRequestDTO dto);
     void eliminar(Long id);
+
+    void actualizarOrden(List<Long> idsOrdenados);
 }

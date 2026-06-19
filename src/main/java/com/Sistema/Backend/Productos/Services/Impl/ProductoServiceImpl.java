@@ -1,5 +1,6 @@
 package com.Sistema.Backend.Productos.Services.Impl;
 
+import com.Sistema.Backend.Categorias.Dto.MenuCategoriaDTO;
 import com.Sistema.Backend.Categorias.Entity.Categoria;
 import com.Sistema.Backend.Categorias.Repository.CategoriaRepository;
 import com.Sistema.Backend.Productos.Dto.Request.ProductoRequestDTO;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -180,6 +182,35 @@ public class ProductoServiceImpl implements ProductoService {
 
         // 🌟 ¡LA MAGIA! Convertimos la página de Entidades a una página de DTOs usando tu ProductoMapper
         return productosPaginados.map(productoMapper::toResponseDTO);
+    }
+
+    @Override
+    public List<MenuCategoriaDTO> obtenerMenuDigital() {
+        // 1. Buscamos todas las categorías activas ordenadas por su prioridad
+        List<Categoria> categorias = categoriaRepository.findByActivoTrueOrderByOrdenAsc();
+        // Asegúrate de tener este método en tu CategoriaRepository usando ORDER BY c.orden ASC
+
+        List<MenuCategoriaDTO> menuCompleto = new ArrayList<>();
+
+        for (Categoria cat : categorias) {
+            MenuCategoriaDTO dto = new MenuCategoriaDTO();
+            dto.setId(cat.getId());
+            dto.setNombre(cat.getNombre());
+            dto.setOrden(cat.getOrden());
+
+            // Mapeamos únicamente sus productos activos
+            List<ProductoResponseDTO> productosDTO = cat.getProductos().stream()
+                    .filter(Producto::getActivo)
+                    .map(productoMapper::toResponseDTO)
+                    .collect(Collectors.toList());
+
+            // Solo agregamos la categoría al menú si tiene productos (opcional)
+            if (!productosDTO.isEmpty()) {
+                dto.setProductos(productosDTO);
+                menuCompleto.add(dto);
+            }
+        }
+        return menuCompleto;
     }
 
     // Método privado para limpieza de código (Mantenibilidad)

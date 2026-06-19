@@ -1,5 +1,6 @@
 package com.Sistema.Backend.Productos.Controllers;
 
+import com.Sistema.Backend.Categorias.Dto.MenuCategoriaDTO;
 import com.Sistema.Backend.Productos.Dto.Request.ProductoRequestDTO;
 import com.Sistema.Backend.Productos.Dto.Response.ProductoResponseDTO;
 import com.Sistema.Backend.Productos.Services.ProductoService;
@@ -63,10 +64,14 @@ public class ProductoController {
 
     // 4. Menú agrupado por categorías (¡Ideal para el Link del Cliente!)
     @GetMapping("/menu")
-    @Operation(summary = "Obtener menú estructurado", description = "Retorna el catálogo disponible agrupado jerárquicamente por el nombre de su categoría, ideal para el frontend público")
-    @ApiResponse(responseCode = "200", description = "Menú agrupado generado")
-    public ResponseEntity<Map<String, List<ProductoResponseDTO>>> obtenerMenuPorCategorias() {
-        return ResponseEntity.ok(productoService.listarMenuPorCategoria());
+    @Operation(
+            summary = "Obtener menú estructurado y ordenado",
+            description = "Retorna el catálogo disponible encapsulado en una lista que respeta la prioridad asignada mediante Drag and Drop"
+    )
+    @ApiResponse(responseCode = "200", description = "Menú ordenado jerárquicamente generado")
+    // CAMBIO AQUÍ: Ahora devuelve un ResponseEntity con una List de MenuCategoriaDTO
+    public ResponseEntity<List<MenuCategoriaDTO>> obtenerMenuPorCategorias() {
+        return ResponseEntity.ok(productoService.obtenerMenuDigital());
     }
 
     // 5. Obtener por ID

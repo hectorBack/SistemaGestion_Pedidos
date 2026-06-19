@@ -24,6 +24,9 @@ public class Categoria {
     @Column(nullable = false)
     private Boolean activo = true;
 
+    @Column(nullable = false)
+    private Integer orden = 0;
+
     // Relación de uno a muchos: Una categoría tiene muchos productos
     // mappedBy apunta al atributo 'categoria' en la entidad Producto
     @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

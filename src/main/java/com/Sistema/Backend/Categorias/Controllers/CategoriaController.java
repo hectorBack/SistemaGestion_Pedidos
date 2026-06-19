@@ -92,4 +92,18 @@ public class CategoriaController {
         categoriaService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/orden")
+    @Operation(
+            summary = "Actualizar prioridad de categorías",
+            description = "Recibe un arreglo plano con los IDs ordenados según el Drag and Drop de la interfaz y reasigna su prioridad masivamente"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Orden del menú actualizado con éxito"),
+            @ApiResponse(responseCode = "400", description = "La lista de IDs proporcionada no es válida")
+    })
+    public ResponseEntity<Void> actualizarOrden(@RequestBody List<Long> idsOrdenados) {
+        categoriaService.actualizarOrden(idsOrdenados);
+        return ResponseEntity.ok().build();
+    }
 }
