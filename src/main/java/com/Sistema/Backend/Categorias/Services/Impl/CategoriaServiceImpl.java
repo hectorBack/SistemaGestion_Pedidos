@@ -30,8 +30,10 @@ public class CategoriaServiceImpl implements CategoriaService {
 
     @Override
     public List<CategoriaResponseDTO> listarTodas() {
-        log.info("Solicitando listado completo de todas las categorías activas");
-        return categoriaRepository.findAll().stream()
+        log.info("Solicitando listado completo de todas las categorías activas ordenadas por prioridad");
+
+        // 🌟 CAMBIO AQUÍ: Cambiamos findAll() por tu nuevo método derivado ordenado
+        return categoriaRepository.findByActivoTrueOrderByOrdenAsc().stream()
                 .map(categoriaMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
