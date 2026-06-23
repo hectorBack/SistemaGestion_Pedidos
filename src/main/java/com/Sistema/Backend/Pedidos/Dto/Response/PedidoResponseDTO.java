@@ -21,4 +21,5 @@ public class PedidoResponseDTO {
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;
     private List<ItemResponseDTO> detalles;
+    private String notas;
 }

@@ -1,5 +1,6 @@
 package com.Sistema.Backend.Pagos.Controller;
 
+import com.Sistema.Backend.Pagos.Dto.ReembolsoRequestDTO;
 import com.Sistema.Backend.Pagos.Dto.Request.PagoRequestDTO;
 import com.Sistema.Backend.Pagos.Dto.Response.PagoResponseDTO;
 import com.Sistema.Backend.Pagos.Entity.MetodoPago;
@@ -77,5 +78,20 @@ public class PagoController {
             Pageable pageable) {
 
         return ResponseEntity.ok(pagoService.obtenerPagosFiltrados(metodo, inicio, fin, pageable));
+    }
+
+    @PatchMapping("/{id}/reembolsar")
+    @Operation(summary = "Reembolsar una transacción aprobada", description = "Cambia el estado de un pago a REEMBOLSADO y añade las observaciones correspondientes en la bitácora de caja.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Transacción reembolsada con éxito"),
+            @ApiResponse(responseCode = "404", description = "El ID del pago no pertenece a ningún registro válido"),
+            @ApiResponse(responseCode = "400", description = "La transacción no cumple con las condiciones para ser reembolsada (ej. ya estaba rechazada o reembolsada)")
+    })
+    public ResponseEntity<PagoResponseDTO> reembolsarPago(
+            @PathVariable Long id,
+            @Valid @RequestBody ReembolsoRequestDTO reembolsoRequest) {
+
+        PagoResponseDTO response = pagoService.reembolsarPago(id, reembolsoRequest);
+        return ResponseEntity.ok(response);
     }
 }

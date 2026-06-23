@@ -24,4 +24,6 @@ public class PedidoRequestDTO {
     private List<ItemPedidoRequestDTO> items;
 
     private Long promocionId; // Para saber qué promoción general aplicó
+
+    private String notas;
 }

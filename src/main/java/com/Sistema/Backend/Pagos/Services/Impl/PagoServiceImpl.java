@@ -1,6 +1,7 @@
 package com.Sistema.Backend.Pagos.Services.Impl;
 
 import com.Sistema.Backend.Exception.ResourceNotFoundException;
+import com.Sistema.Backend.Pagos.Dto.ReembolsoRequestDTO;
 import com.Sistema.Backend.Pagos.Dto.Request.PagoRequestDTO;
 import com.Sistema.Backend.Pagos.Dto.Response.PagoResponseDTO;
 import com.Sistema.Backend.Pagos.Entity.EstadoPago;
@@ -116,5 +117,39 @@ public class PagoServiceImpl implements PagoService {
 
         return pagoRepository.filtrarPagos(metodo, fechaInicio, fechaFin, pageable)
                 .map(pagoMapper::toResponseDTO);
+    }
+
+    @Override
+    @Transactional
+    public PagoResponseDTO reembolsarPago(Long id, ReembolsoRequestDTO reembolsoRequest) {
+        // 1. Buscar y validar el pago existente
+        Pago pago = pagoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró el pago con ID: " + id));
+
+        if (!"APROBADO".equals(pago.getEstado().toString())) {
+            throw new IllegalStateException("Solo se pueden reembolsar transacciones con estado APROBADO");
+        }
+
+        // 2. Modificar el estado del pago
+        pago.setEstado(EstadoPago.REEMBOLSADO);
+        String notasActuales = pago.getNotas() != null ? pago.getNotas() + " | " : "";
+        pago.setNotas(notasActuales + "REEMBOLSO: " + reembolsoRequest.getMotivo());
+        Pago pagoActualizado = pagoRepository.save(pago);
+
+        // 3. NUEVO: Cancelar el pedido asociado automáticamente
+        if (pago.getPedido() != null) {
+            Pedido pedido = pago.getPedido();
+
+            // Asumiendo que tu enum de Pedido tiene CANCELADO
+            pedido.setEstado(EstadoPedido.CANCELADO);
+
+            String notasPedido = pedido.getNotas() != null ? pedido.getNotas() + " | " : "";
+            pedido.setNotas(notasPedido + "Pedido cancelado automáticamente por reembolso de caja. Motivo: " + reembolsoRequest.getMotivo());
+
+            // Si tienes un pedidoRepository inyectado en este servicio:
+            pedidoRepository.save(pedido);
+        }
+
+        return pagoMapper.toResponseDTO(pagoActualizado);
     }
 }
