@@ -1,10 +1,14 @@
 package com.Sistema.Backend.Pagos.Mapper;
 
 import com.Sistema.Backend.Pagos.Dto.Request.PagoRequestDTO;
+import com.Sistema.Backend.Pagos.Dto.Response.HistorialPagosResponseDTO;
 import com.Sistema.Backend.Pagos.Dto.Response.PagoResponseDTO;
 import com.Sistema.Backend.Pagos.Entity.MetodoPago;
 import com.Sistema.Backend.Pagos.Entity.Pago;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
 
 @Component
 public class PagoMapper {
@@ -40,5 +44,11 @@ public class PagoMapper {
         }
 
         return dto;
+    }
+
+    public HistorialPagosResponseDTO toHistorialResponseDTO(Page<PagoResponseDTO> dtoPage, BigDecimal totalAcumulado) {
+        if (dtoPage == null) return null;
+
+        return new HistorialPagosResponseDTO(dtoPage, totalAcumulado);
     }
 }

@@ -2,6 +2,7 @@ package com.Sistema.Backend.Pagos.Controller;
 
 import com.Sistema.Backend.Pagos.Dto.ReembolsoRequestDTO;
 import com.Sistema.Backend.Pagos.Dto.Request.PagoRequestDTO;
+import com.Sistema.Backend.Pagos.Dto.Response.HistorialPagosResponseDTO;
 import com.Sistema.Backend.Pagos.Dto.Response.PagoResponseDTO;
 import com.Sistema.Backend.Pagos.Entity.MetodoPago;
 import com.Sistema.Backend.Pagos.Services.PagoService;
@@ -71,7 +72,7 @@ public class PagoController {
     @GetMapping("/filtrar")
     @Operation(summary = "Filtrar y auditar pagos (Reportería)", description = "Consulta paginada obligatoria por rangos de fechas (Formato ISO YYYY-MM-DD) y método de pago opcional para auditorías financieras")
     @ApiResponse(responseCode = "200", description = "Listado de auditoría generado correctamente")
-    public ResponseEntity<Page<PagoResponseDTO>> filtrarPagos(
+    public ResponseEntity<HistorialPagosResponseDTO> filtrarPagos(
             @RequestParam(required = false) MetodoPago metodo,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin,

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -28,4 +29,14 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
             @Param("inicio") LocalDateTime inicio,
             @Param("fin") LocalDateTime fin,
             Pageable pageable);
+
+    // NUEVO MÉTODO PARA EL TOTAL GLOBAL (Mismos filtros, sin Pageable)
+    @Query("SELECT SUM(p.monto) FROM Pago p WHERE " +
+            "(:metodo IS NULL OR p.metodoPago = :metodo) AND " +
+            "(p.fechaPago BETWEEN :inicio AND :fin) AND " +
+            "(p.estado = 'APROBADO')")
+    BigDecimal sumarTotalPorFiltros(
+            @Param("metodo") MetodoPago metodo,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fin") LocalDateTime fin);
 }

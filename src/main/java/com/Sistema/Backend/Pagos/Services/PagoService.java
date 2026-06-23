@@ -2,6 +2,7 @@ package com.Sistema.Backend.Pagos.Services;
 
 import com.Sistema.Backend.Pagos.Dto.ReembolsoRequestDTO;
 import com.Sistema.Backend.Pagos.Dto.Request.PagoRequestDTO;
+import com.Sistema.Backend.Pagos.Dto.Response.HistorialPagosResponseDTO;
 import com.Sistema.Backend.Pagos.Dto.Response.PagoResponseDTO;
 import com.Sistema.Backend.Pagos.Entity.MetodoPago;
 import org.springframework.data.domain.Page;
@@ -26,7 +27,7 @@ public interface PagoService {
     List<PagoResponseDTO> obtenerTodos();
 
     // Nuevo método con filtros de negocio y paginador
-    Page<PagoResponseDTO> obtenerPagosFiltrados(MetodoPago metodo, LocalDate inicio, LocalDate fin, Pageable pageable);
+    HistorialPagosResponseDTO obtenerPagosFiltrados(MetodoPago metodo, LocalDate inicio, LocalDate fin, Pageable pageable);
 
     PagoResponseDTO reembolsarPago(Long id, ReembolsoRequestDTO reembolsoRequest);
 }
