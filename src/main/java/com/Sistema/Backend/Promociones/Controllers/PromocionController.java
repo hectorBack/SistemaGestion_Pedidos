@@ -1,5 +1,6 @@
 package com.Sistema.Backend.Promociones.Controllers;
 
+import com.Sistema.Backend.Promociones.Dto.PromocionStatsDTO;
 import com.Sistema.Backend.Promociones.Dto.Request.PromocionRequestDTO;
 import com.Sistema.Backend.Promociones.Dto.Response.PromocionResponseDTO;
 import com.Sistema.Backend.Promociones.Services.PromocionService;
@@ -79,5 +80,22 @@ public class PromocionController {
     public ResponseEntity<Void> desactivar(@PathVariable Long id) {
         promocionService.desactivarPromocion(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/activar")
+    @Operation(summary = "Activar promoción", description = "Cambia el flag de actividad a verdadero de manera inmediata para reanudar el descuento comercial")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Promoción activada exitosamente"),
+            @ApiResponse(responseCode = "404", description = "El ID de la promoción no existe en la base de datos")
+    })
+    public ResponseEntity<Void> activar(@PathVariable Long id) {
+        promocionService.activarPromocion(id); // O el método correspondiente en tu servicio que ponga el flag en true
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Obtener estadísticas globales", description = "Retorna el conteo consolidado de todo el universo de promociones")
+    public ResponseEntity<PromocionStatsDTO> getStats() {
+        return ResponseEntity.ok(promocionService.obtenerEstadisticasGlobales());
     }
 }

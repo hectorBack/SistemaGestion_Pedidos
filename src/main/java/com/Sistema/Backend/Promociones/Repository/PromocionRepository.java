@@ -26,7 +26,23 @@ public interface PromocionRepository extends JpaRepository<Promocion, Long> {
             "(:activa IS NULL OR p.activa = :activa)")
     Page<Promocion> buscarConFiltrosPaginados(
             @Param("nombre") String nombre,
-            @Param("activa") Boolean activa, // 🌟 Filtro por estado añadido
+            @Param("activa") Boolean activa,
             Pageable pageable
     );
+
+    // Conteo Total (Todas las que existen en la tabla)
+    @Query("SELECT COUNT(p.id) FROM Promocion p")
+    long countTotal();
+
+    // Conteo Activas (Switch encendido y dentro del rango de fechas)
+    @Query("SELECT COUNT(p.id) FROM Promocion p WHERE p.activa = true AND (p.fechaFin IS NULL OR :ahora <= p.fechaFin) AND (p.fechaInicio IS NULL OR :ahora >= p.fechaInicio)")
+    long countActivas(@Param("ahora") LocalDateTime ahora);
+
+    // Conteo Programadas (Switch encendido pero fecha de inicio a futuro)
+    @Query("SELECT COUNT(p.id) FROM Promocion p WHERE p.activa = true AND p.fechaInicio IS NOT NULL AND :ahora < p.fechaInicio")
+    long countProgramadas(@Param("ahora") LocalDateTime ahora);
+
+    // Conteo Expiradas (Fecha de fin ya pasó, sin importar el switch)
+    @Query("SELECT COUNT(p.id) FROM Promocion p WHERE p.fechaFin IS NOT NULL AND :ahora > p.fechaFin")
+    long countExpiradas(@Param("ahora") LocalDateTime ahora);
 }

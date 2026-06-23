@@ -1,5 +1,6 @@
 package com.Sistema.Backend.Promociones.Services.Impl;
 
+import com.Sistema.Backend.Promociones.Dto.PromocionStatsDTO;
 import com.Sistema.Backend.Promociones.Dto.Request.PromocionRequestDTO;
 import com.Sistema.Backend.Promociones.Dto.Response.PromocionResponseDTO;
 import com.Sistema.Backend.Productos.Entity.Producto;
@@ -9,6 +10,7 @@ import com.Sistema.Backend.Promociones.Mapper.PromocionMapper;
 import com.Sistema.Backend.Productos.Repository.ProductoRepository;
 import com.Sistema.Backend.Promociones.Repository.PromocionRepository;
 import com.Sistema.Backend.Promociones.Services.PromocionService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -111,6 +113,31 @@ public class PromocionServiceImpl implements PromocionService {
 
         // 🌟 Mapeamos la página de entidades a DTOs
         return promocionesPaginadas.map(promocionMapper::toResponseDTO);
+    }
+
+    @Override
+    public void activarPromocion(Long id) {
+        Promocion promo = promocionRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Promoción no encontrada"));
+
+        if (promo.getFechaFin() != null && LocalDateTime.now().isAfter(promo.getFechaFin())) {
+            throw new IllegalStateException("No se puede activar una promoción que ya ha expirado");
+        }
+
+        promo.setActiva(true);
+        promocionRepository.save(promo);
+    }
+
+    @Override
+    public PromocionStatsDTO obtenerEstadisticasGlobales() {
+        LocalDateTime ahora = LocalDateTime.now();
+
+        long total = promocionRepository.countTotal();
+        long activas = promocionRepository.countActivas(ahora);
+        long programadas = promocionRepository.countProgramadas(ahora);
+        long expiradas = promocionRepository.countExpiradas(ahora);
+
+        return new PromocionStatsDTO(total, activas, programadas, expiradas);
     }
 
     // Método privado para limpieza de código (Mantenibilidad)

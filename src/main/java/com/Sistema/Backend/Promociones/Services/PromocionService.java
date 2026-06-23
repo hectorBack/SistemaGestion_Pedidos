@@ -1,5 +1,6 @@
 package com.Sistema.Backend.Promociones.Services;
 
+import com.Sistema.Backend.Promociones.Dto.PromocionStatsDTO;
 import com.Sistema.Backend.Promociones.Dto.Request.PromocionRequestDTO;
 import com.Sistema.Backend.Promociones.Dto.Response.PromocionResponseDTO;
 import com.Sistema.Backend.Promociones.Entity.Promocion;
@@ -20,4 +21,8 @@ public interface PromocionService {
      * Listar paginado
      */
     Page<PromocionResponseDTO> listarPaginado(String nombre, Boolean activa, Pageable pageable);
+
+    void activarPromocion(Long id);
+
+    PromocionStatsDTO obtenerEstadisticasGlobales();
 }
