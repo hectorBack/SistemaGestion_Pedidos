@@ -39,7 +39,7 @@ public interface PromocionRepository extends JpaRepository<Promocion, Long> {
     long countActivas(@Param("ahora") LocalDateTime ahora);
 
     // Conteo Programadas (Switch encendido pero fecha de inicio a futuro)
-    @Query("SELECT COUNT(p.id) FROM Promocion p WHERE p.activa = true AND p.fechaInicio IS NOT NULL AND :ahora < p.fechaInicio")
+    @Query("SELECT COUNT(p.id) FROM Promocion p WHERE p.fechaInicio IS NOT NULL AND p.fechaInicio > :ahora")
     long countProgramadas(@Param("ahora") LocalDateTime ahora);
 
     // Conteo Expiradas (Fecha de fin ya pasó, sin importar el switch)
