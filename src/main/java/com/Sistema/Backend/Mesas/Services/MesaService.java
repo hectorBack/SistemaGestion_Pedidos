@@ -4,6 +4,8 @@ import com.Sistema.Backend.Mesas.Dto.Request.CambioEstadoRequestDTO;
 import com.Sistema.Backend.Mesas.Dto.Request.MesaRequestDTO;
 import com.Sistema.Backend.Mesas.Dto.Response.MesaResponseDTO;
 import com.Sistema.Backend.Mesas.Entity.EstadoMesa;
+import com.Sistema.Backend.Pedidos.Dto.Request.ComandaMesaRequestDTO;
+import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
 
 import java.util.List;
 
@@ -16,7 +18,7 @@ public interface MesaService {
     MesaResponseDTO actualizarMesa(Long id, MesaRequestDTO request);
 
     // Métodos operativos con reglas de negocio específicas
-    MesaResponseDTO abrirMesa(Long id, Long pedidoId, Long meseroId);
+    MesaResponseDTO abrirMesa(Long id, ComandaMesaRequestDTO comandaRequest, Long meseroId);
     MesaResponseDTO cambiarEstadoRapido(Long id, CambioEstadoRequestDTO request);
     MesaResponseDTO reservarMesa(Long id, String notasReserva);
 }

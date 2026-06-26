@@ -10,6 +10,11 @@ import com.Sistema.Backend.Mesas.Exception.BusinessException;
 import com.Sistema.Backend.Mesas.Mapper.MesaMapper;
 import com.Sistema.Backend.Mesas.Repository.MesaRepository;
 import com.Sistema.Backend.Mesas.Services.MesaService;
+import com.Sistema.Backend.Pedidos.Dto.Request.ComandaMesaRequestDTO;
+import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
+import com.Sistema.Backend.Pedidos.Dto.Response.PedidoResponseDTO;
+import com.Sistema.Backend.Pedidos.Entity.EstadoPedido;
+import com.Sistema.Backend.Pedidos.Services.PedidoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +28,12 @@ public class MesaServiceImpl implements MesaService {
 
     private final MesaRepository mesaRepository;
     private final MesaMapper mesaMapper;
+    private final PedidoService pedidoService;
 
-    public MesaServiceImpl(MesaRepository mesaRepository, MesaMapper mesaMapper) {
+    public MesaServiceImpl(MesaRepository mesaRepository, MesaMapper mesaMapper, PedidoService pedidoService) {
         this.mesaRepository = mesaRepository;
         this.mesaMapper = mesaMapper;
+        this.pedidoService = pedidoService;
     }
 
     @Override
@@ -94,28 +101,43 @@ public class MesaServiceImpl implements MesaService {
 
     @Override
     @Transactional
-    public MesaResponseDTO abrirMesa(Long id, Long pedidoId, Long meseroId) {
-        log.info("Intento de apertura operativa para mesa ID: {}. Pedido: {}, Mesero: {}", id, pedidoId, meseroId);
+    public MesaResponseDTO abrirMesa(Long id, ComandaMesaRequestDTO comandaRequest, Long meseroId) {
+        log.info("Iniciando apertura con ComandaMesaRequestDTO para mesa ID: {}", id);
 
         Mesa mesa = mesaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Mesa no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Mesa no encontrada con ID: " + id));
 
         if (mesa.getEstado() == EstadoMesa.OCUPADA) {
-            log.warn("Transición denegada: La mesa ID: {} ya se encuentra ocupada", id);
-            throw new BusinessException("La mesa ya se encuentra ocupada con otra orden activa");
+            throw new BusinessException("La mesa ya se encuentra ocupada.");
         }
 
-        if (pedidoId == null || meseroId == null) {
-            log.error("Transición denegada: Faltan parámetros requeridos para la comanda");
-            throw new BusinessException("Para abrir una mesa es obligatorio asignar un pedido y un mesero responsable");
+        if (meseroId == null) {
+            throw new BusinessException("Es obligatorio asignar un mesero responsable.");
         }
 
+        if (comandaRequest == null || comandaRequest.getItems() == null || comandaRequest.getItems().isEmpty()) {
+            throw new BusinessException("No se puede abrir una mesa sin productos.");
+        }
+
+        // 🚀 Adaptamos el flujo creando el PedidoRequestDTO definitivo que exige el PedidoService
+        PedidoRequestDTO pedidoRequest = new PedidoRequestDTO();
+        pedidoRequest.setNombreCliente("Mesa " + mesa.getNumero());
+        pedidoRequest.setItems(comandaRequest.getItems());
+        pedidoRequest.setNotas(comandaRequest.getNotas());
+        pedidoRequest.setPromocionId(comandaRequest.getPromocionId());
+
+        // 🌟 Truco Clave: Ponemos un valor quemado de 10 dígitos para saltar el @Size(10) y el NOT NULL
+        pedidoRequest.setWhatsappFinal("0000000000");
+
+        // Delegamos la creación al servicio de pedidos
+        PedidoResponseDTO pedidoGuardado = pedidoService.crearPedido(pedidoRequest);
+
+        // Enlazamos la mesa
         mesa.setEstado(EstadoMesa.OCUPADA);
-        mesa.setPedidoId(pedidoId);
+        mesa.setPedidoId(pedidoGuardado.getId());
         mesa.setMeseroId(meseroId);
         mesa.setNotasReserva(null);
 
-        log.info("Mesa '{}' abierta correctamente bajo la orden '{}'", mesa.getNumero(), pedidoId);
         return mesaMapper.toResponse(mesaRepository.save(mesa));
     }
 
@@ -158,15 +180,26 @@ public class MesaServiceImpl implements MesaService {
             throw new BusinessException("No puedes forzar el estado OCUPADA desde aquí. Utiliza el flujo de apertura.");
         }
 
-        if (nuevo == EstadoMesa.LIBRE) {
-            log.debug("Limpiando metadatos y asignaciones previas de la mesa '{}'", mesa.getNumero());
+        // 🚀 NUEVA LÓGICA DE NEGOCIO: El servicio ha terminado exitosamente
+        if (nuevo == EstadoMesa.SUCIA) {
+            if (mesa.getPedidoId() != null) {
+                log.info("Finalizando servicio de la mesa '{}'. Cambiando Pedido ID: {} a ENTREGADO.", mesa.getNumero(), mesa.getPedidoId());
+
+                // Cambiamos el estado del pedido de forma automática en la base de datos
+                pedidoService.actualizarEstado(mesa.getPedidoId(), EstadoPedido.ENTREGADO);
+            }
+        }
+
+        // 🧼 Limpieza de metadatos (Aplica cuando pasa a SUCIA para liberar el ID del pedido, o a LIBRE)
+        if (nuevo == EstadoMesa.SUCIA || nuevo == EstadoMesa.LIBRE) {
+            log.debug("Limpiando metadatos y enlaces de pedido para la mesa '{}'", mesa.getNumero());
             mesa.setPedidoId(null);
             mesa.setMeseroId(null);
             mesa.setNotasReserva(null);
         }
 
         mesa.setEstado(nuevo);
-        log.info("Estado de la mesa '{}' actualizado a {}", mesa.getNumero(), nuevo);
+        log.info("Estado de la mesa '{}' actualizado con éxito a {}", mesa.getNumero(), nuevo);
         return mesaMapper.toResponse(mesaRepository.save(mesa));
     }
 }

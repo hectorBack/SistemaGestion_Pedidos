@@ -5,6 +5,8 @@ import com.Sistema.Backend.Mesas.Dto.Request.MesaRequestDTO;
 import com.Sistema.Backend.Mesas.Dto.Response.MesaResponseDTO;
 import com.Sistema.Backend.Mesas.Entity.EstadoMesa;
 import com.Sistema.Backend.Mesas.Services.MesaService;
+import com.Sistema.Backend.Pedidos.Dto.Request.ComandaMesaRequestDTO;
+import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -82,9 +84,9 @@ public class MesaController {
     })
     public ResponseEntity<MesaResponseDTO> abrirMesa(
             @PathVariable Long id,
-            @RequestParam Long pedidoId,
+            @RequestBody ComandaMesaRequestDTO comandaMesaRequestDTO,
             @RequestParam Long meseroId) {
-        MesaResponseDTO abierta = mesaService.abrirMesa(id, pedidoId, meseroId);
+        MesaResponseDTO abierta = mesaService.abrirMesa(id, comandaMesaRequestDTO, meseroId);
         return ResponseEntity.ok(abierta);
     }
 
