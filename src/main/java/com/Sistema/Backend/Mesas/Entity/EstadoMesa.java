@@ -1,5 +1,8 @@
 package com.Sistema.Backend.Mesas.Entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+@JsonFormat(shape = JsonFormat.Shape.STRING)
 public enum EstadoMesa
 {
     LIBRE,      // Disponible para recibir clientes

@@ -121,6 +121,7 @@ public class MesaServiceImpl implements MesaService {
 
         // 🚀 Adaptamos el flujo creando el PedidoRequestDTO definitivo que exige el PedidoService
         PedidoRequestDTO pedidoRequest = new PedidoRequestDTO();
+        pedidoRequest.setMesaId(id);
         pedidoRequest.setNombreCliente("Mesa " + mesa.getNumero());
         pedidoRequest.setItems(comandaRequest.getItems());
         pedidoRequest.setNotas(comandaRequest.getNotas());

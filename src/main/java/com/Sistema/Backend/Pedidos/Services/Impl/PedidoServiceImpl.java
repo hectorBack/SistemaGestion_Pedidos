@@ -178,28 +178,40 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional
     public PedidoResponseDTO actualizarEstado(Long id, EstadoPedido nuevoEstado) {
+        // 1. Forzar una búsqueda limpia que traiga la Mesa cargada (Eager o con Join si es necesario)
         Pedido pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido " + id + " no existe"));
 
-        // Lógica de escalabilidad: No puedes pasar de CANCELADO a ENTREGADO
         if (pedido.getEstado() == EstadoPedido.CANCELADO) {
             throw new BusinessException("No se puede cambiar el estado de un pedido cancelado.");
         }
 
         pedido.setEstado(nuevoEstado);
 
-        // 🌟 NUEVA LÓGICA: Si el pedido pasa a ENTREGADO, liberamos su mesa asociada
+        // 🌟 LOG DE CONTROL 1: Ver si el backend realmente entra aquí y qué tiene adentro
+        System.out.println("=== BACKEND: Procesando pedido ID: " + id + " con nuevo estado: " + nuevoEstado);
+        if (pedido.getMesa() != null) {
+            System.out.println("=== BACKEND: La mesa asociada es la número: " + pedido.getMesa().getNumero());
+        } else {
+            System.out.println("=== BACKEND WARN: ¡Este pedido NO tiene ninguna mesa asignada en la BD!");
+        }
+
+        // 2. Si pasa a ENTREGADO y tiene mesa, operamos de forma segura
         if (nuevoEstado == EstadoPedido.ENTREGADO && pedido.getMesa() != null) {
             var mesa = pedido.getMesa();
 
-            // NOTA: Ajusta "EstadoMesa.LIBRE" según manejes tu Enum o String en la entidad Mesa
-            mesa.setEstado(EstadoMesa.LIBRE);
+            // Cambiamos el estado de la mesa
+            mesa.setEstado(EstadoMesa.SUCIA);
 
-            mesaRepository.save(mesa);
-            log.info("Mesa {} liberada automáticamente tras entregar el pedido id: {}", mesa.getNumero(), pedido.getId());
+            // IMPORTANTE: Primero guardamos y confirmamos la mesa de forma independiente
+            mesaRepository.saveAndFlush(mesa);
+
+            // Opcional: Si en tu entidad Mesa tienes una lista de pedidos, o si en Pedido
+            // la relación requiere actualizar ambos lados, asegúrate de refrescarlo.
+            log.info("¡Mesa {} liberada con éxito en la base de datos!", mesa.getNumero());
         }
 
-        // Cambiamos save() por saveAndFlush() para forzar el PreUpdate antes de mapear al DTO
+        // Guardamos el pedido
         Pedido pedidoActualizado = pedidoRepository.saveAndFlush(pedido);
         return pedidoMapper.toResponseDTO(pedidoActualizado);
     }

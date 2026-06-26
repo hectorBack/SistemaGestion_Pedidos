@@ -39,10 +39,10 @@ public class PedidoController {
     }
 
     // 3. Actualizar estado (Para pasar de PENDIENTE a EN_COCINA, etc.)
-    @PatchMapping("/{id}/estado")
+    @PatchMapping("/{id}/estado/{nuevoEstado}")
     public ResponseEntity<PedidoResponseDTO> actualizarEstado(
             @PathVariable Long id,
-            @RequestParam EstadoPedido nuevoEstado) {
+            @PathVariable EstadoPedido nuevoEstado) {
         return ResponseEntity.ok(pedidoService.actualizarEstado(id, nuevoEstado));
     }
 
