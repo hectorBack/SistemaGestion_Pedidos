@@ -26,4 +26,6 @@ public class PedidoRequestDTO {
     private Long promocionId; // Para saber qué promoción general aplicó
 
     private String notas;
+
+    private Long mesaId;
 }

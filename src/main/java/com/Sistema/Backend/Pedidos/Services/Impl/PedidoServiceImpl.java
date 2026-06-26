@@ -1,5 +1,8 @@
 package com.Sistema.Backend.Pedidos.Services.Impl;
 
+import com.Sistema.Backend.Mesas.Entity.EstadoMesa;
+import com.Sistema.Backend.Mesas.Entity.Mesa;
+import com.Sistema.Backend.Mesas.Repository.MesaRepository;
 import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Response.PedidoResponseDTO;
 import com.Sistema.Backend.Exception.BusinessException;
@@ -40,12 +43,14 @@ public class PedidoServiceImpl implements PedidoService {
     private final ProductoRepository productoRepository;
     private final PromocionRepository promocionRepository;
     private final PedidoMapper pedidoMapper;
+    private final MesaRepository mesaRepository;
 
-    public PedidoServiceImpl(PedidoRepository pedidoRepository, ProductoRepository productoRepository, PromocionRepository promocionRepository, PedidoMapper pedidoMapper) {
+    public PedidoServiceImpl(PedidoRepository pedidoRepository, ProductoRepository productoRepository, PromocionRepository promocionRepository, PedidoMapper pedidoMapper, MesaRepository mesaRepository) {
         this.pedidoRepository = pedidoRepository;
         this.productoRepository = productoRepository;
         this.promocionRepository = promocionRepository;
         this.pedidoMapper = pedidoMapper;
+        this.mesaRepository = mesaRepository;
     }
 
     @Override
@@ -67,6 +72,13 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setNombreCliente(request.getNombreCliente());
         pedido.setEstado(EstadoPedido.PENDIENTE);
         pedido.setDetalles(new ArrayList<>()); // Aseguramos inicialización
+
+        // 🌟 NUEVA LÓGICA: Si viene un ID de mesa, lo asociamos al pedido
+        if (request.getMesaId() != null) {
+            Mesa mesa = mesaRepository.findById(request.getMesaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("La mesa con ID " + request.getMesaId() + " no existe"));
+            pedido.setMesa(mesa);
+        }
         return pedido;
     }
 
@@ -175,6 +187,18 @@ public class PedidoServiceImpl implements PedidoService {
         }
 
         pedido.setEstado(nuevoEstado);
+
+        // 🌟 NUEVA LÓGICA: Si el pedido pasa a ENTREGADO, liberamos su mesa asociada
+        if (nuevoEstado == EstadoPedido.ENTREGADO && pedido.getMesa() != null) {
+            var mesa = pedido.getMesa();
+
+            // NOTA: Ajusta "EstadoMesa.LIBRE" según manejes tu Enum o String en la entidad Mesa
+            mesa.setEstado(EstadoMesa.LIBRE);
+
+            mesaRepository.save(mesa);
+            log.info("Mesa {} liberada automáticamente tras entregar el pedido id: {}", mesa.getNumero(), pedido.getId());
+        }
+
         // Cambiamos save() por saveAndFlush() para forzar el PreUpdate antes de mapear al DTO
         Pedido pedidoActualizado = pedidoRepository.saveAndFlush(pedido);
         return pedidoMapper.toResponseDTO(pedidoActualizado);
@@ -207,12 +231,19 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional
     public void cancelarPedido(Long id) {
-        // Reutilizamos el método de buscar para asegurar que existe
         Pedido pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("No se puede cancelar: Pedido no encontrado"));
 
         pedido.setEstado(EstadoPedido.CANCELADO);
-        pedido.setFechaActualizacion(LocalDateTime.now()); // Forzamos de forma explícita por seguridad
+        pedido.setFechaActualizacion(LocalDateTime.now());
+
+        // 🌟 Opcional: También liberar la mesa si se cancela la comanda entera
+        if (pedido.getMesa() != null) {
+            var mesa = pedido.getMesa();
+            mesa.setEstado(EstadoMesa.LIBRE); // O el valor que uses para libre
+            mesaRepository.save(mesa);
+        }
+
         pedidoRepository.save(pedido);
     }
 

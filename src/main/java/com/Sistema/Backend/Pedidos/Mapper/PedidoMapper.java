@@ -25,9 +25,15 @@ public class PedidoMapper {
         dto.setFechaActualizacion(pedido.getFechaActualizacion());
         dto.setNotas(pedido.getNotas());
 
+
         dto.setDetalles(pedido.getDetalles().stream()
                 .map(this::toItemResponseDTO)
                 .collect(Collectors.toList()));
+
+        if (pedido.getMesa() != null) {
+            dto.setMesaId(pedido.getMesa().getId());
+            dto.setNumeroMesa(pedido.getMesa().getNumero()); // Evita errores de compilación
+        }
 
         return dto;
     }

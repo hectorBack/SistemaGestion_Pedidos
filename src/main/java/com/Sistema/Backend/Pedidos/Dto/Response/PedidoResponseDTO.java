@@ -22,4 +22,6 @@ public class PedidoResponseDTO {
     private LocalDateTime fechaActualizacion;
     private List<ItemResponseDTO> detalles;
     private String notas;
+    private Long mesaId;       // ID por si necesitas hacer consultas en Vue
+    private String numeroMesa; // El número físico (ej: Mesa 3) para mostrar en pantalla
 }
