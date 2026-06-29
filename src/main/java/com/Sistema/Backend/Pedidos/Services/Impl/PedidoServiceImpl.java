@@ -3,6 +3,7 @@ package com.Sistema.Backend.Pedidos.Services.Impl;
 import com.Sistema.Backend.Mesas.Entity.EstadoMesa;
 import com.Sistema.Backend.Mesas.Entity.Mesa;
 import com.Sistema.Backend.Mesas.Repository.MesaRepository;
+import com.Sistema.Backend.Pedidos.Dto.Request.AgregarItemsRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Response.PedidoResponseDTO;
 import com.Sistema.Backend.Exception.BusinessException;
@@ -161,7 +162,9 @@ public class PedidoServiceImpl implements PedidoService {
             detalle.setProducto(producto);
             detalle.setCantidad(itemDto.getCantidad());
             detalle.setPrecioUnitario(producto.getPrecio());
-            detalle.setNotasPersonalizacion(itemDto.getNotas());
+
+            System.out.println("Nota recibida en el backend: " + itemDto.getNotas());
+            detalle.setNotas(itemDto.getNotas());
             return detalle;
         }
 
@@ -292,5 +295,61 @@ public class PedidoServiceImpl implements PedidoService {
         return pedidoRepository.findByCodigo(codigo)
                 .map(pedidoMapper::toResponseDTO) // Convierte elegantemente de Entidad a DTO
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con el código: " + codigo));
+    }
+
+    @Override
+    @Transactional
+    public PedidoResponseDTO agregarItemsAPedido(Long pedidoId, AgregarItemsRequestDTO request) {
+        // 1. Buscar el pedido existente
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado"));
+
+        // Validar que el pedido aún se pueda modificar
+        if (pedido.getEstado() == EstadoPedido.ENTREGADO || pedido.getEstado() == EstadoPedido.CANCELADO) {
+            throw new IllegalStateException("No se pueden agregar productos a un pedido finalizado o cancelado");
+        }
+
+        BigDecimal subtotalNuevosItems = BigDecimal.ZERO;
+
+        // 2. Recorrer los nuevos productos enviados desde el Frontend
+        for (ItemPedidoRequestDTO itemDto : request.getNuevosItems()) {
+            Producto producto = productoRepository.findById(itemDto.getProductoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
+
+            // 3. Crear el nuevo detalle usando tu método existente
+            DetallePedido detalle = new DetallePedido();
+            detalle.setPedido(pedido);
+            detalle.setProducto(producto);
+            detalle.setCantidad(itemDto.getCantidad());
+            detalle.setPrecioUnitario(producto.getPrecio());
+            detalle.setNotas(itemDto.getNotas());
+            detalle.setEnviadoACocina(false); // 🌟 Es nuevo, va para la cocina
+
+            // Calcular el acumulado del dinero nuevo
+            BigDecimal costoItem = producto.getPrecio().multiply(BigDecimal.valueOf(itemDto.getCantidad()));
+            subtotalNuevosItems = subtotalNuevosItems.add(costoItem);
+
+            // 4. Agregarlo a la lista de detalles del pedido original
+            pedido.getDetalles().add(detalle);
+        }
+
+        // 5. Actualizar el gran total del pedido
+        pedido.setTotal(pedido.getTotal().add(subtotalNuevosItems));
+
+        // 6. Guardar los cambios (CascadeType.ALL se encarga de insertar los nuevos detalles automáticamente)
+        Pedido pedidoActualizado = pedidoRepository.save(pedido);
+
+        // 7. Retornar el pedido con el Mapper que ya tienes listo
+        return pedidoMapper.toResponseDTO(pedidoActualizado);
+    }
+
+    @Override
+    public PedidoResponseDTO obtenerPedidoActivoPorMesa(Long mesaId) {
+        List<EstadoPedido> estadosActivos = List.of(EstadoPedido.PENDIENTE, EstadoPedido.EN_COCINA);
+
+        Pedido pedido = pedidoRepository.findByMesaIdAndEstadoIn(mesaId, estadosActivos)
+                .orElseThrow(() -> new ResourceNotFoundException("No hay pedidos activos para esta mesa"));
+
+        return pedidoMapper.toResponseDTO(pedido);
     }
 }

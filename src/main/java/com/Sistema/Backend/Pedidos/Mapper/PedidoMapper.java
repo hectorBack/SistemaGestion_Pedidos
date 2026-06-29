@@ -43,7 +43,7 @@ public class PedidoMapper {
         dto.setNombreProducto(detalle.getProducto().getNombre());
         dto.setCantidad(detalle.getCantidad());
         dto.setPrecioUnitario(detalle.getPrecioUnitario());
-        dto.setNotas(detalle.getNotasPersonalizacion());
+        dto.setNotas(detalle.getNotas());
         return dto;
     }
 }

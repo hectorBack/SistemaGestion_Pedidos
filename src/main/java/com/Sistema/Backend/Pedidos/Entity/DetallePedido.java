@@ -37,6 +37,9 @@ public class DetallePedido {
     private BigDecimal precioUnitario;
 
     // Aquí guardamos: "Sin cebolla", "Sin tomate", etc.
-    @Column(name = "notas_personalizacion", columnDefinition = "TEXT")
-    private String notasPersonalizacion;
+    @Column(name = "notas", columnDefinition = "TEXT")
+    private String notas;
+
+    @Column(name = "enviado_a_cocina", nullable = false, columnDefinition = "boolean default false")
+    private boolean enviadoACocina = false; // Por defecto los nuevos items entran en false
 }

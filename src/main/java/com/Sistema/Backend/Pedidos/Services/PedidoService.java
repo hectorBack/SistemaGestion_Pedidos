@@ -1,5 +1,6 @@
 package com.Sistema.Backend.Pedidos.Services;
 
+import com.Sistema.Backend.Pedidos.Dto.Request.AgregarItemsRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Response.PedidoResponseDTO;
 import com.Sistema.Backend.Pedidos.Entity.EstadoPedido;
@@ -63,4 +64,8 @@ public interface PedidoService {
      * Filtro avanzado: Por codigo
      */
     PedidoResponseDTO buscarPorCodigo(String codigo);
+
+    PedidoResponseDTO agregarItemsAPedido(Long pedidoId, AgregarItemsRequestDTO request);
+
+    PedidoResponseDTO obtenerPedidoActivoPorMesa(Long mesaId);
 }

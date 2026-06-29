@@ -1,5 +1,7 @@
 package com.Sistema.Backend.Pedidos.Controllers;
 
+import com.Sistema.Backend.Exception.ResourceNotFoundException;
+import com.Sistema.Backend.Pedidos.Dto.Request.AgregarItemsRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Response.PedidoResponseDTO;
 import com.Sistema.Backend.Pedidos.Entity.EstadoPedido;
@@ -88,4 +90,23 @@ public class PedidoController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{id}/agregar-items")
+    public ResponseEntity<PedidoResponseDTO> agregarItems(
+            @PathVariable Long id,
+            @RequestBody AgregarItemsRequestDTO request) {
+
+        PedidoResponseDTO respuesta = pedidoService.agregarItemsAPedido(id, request);
+        return ResponseEntity.ok(respuesta);
+    }
+
+    @GetMapping("/activo/mesa/{mesaId}")
+    public ResponseEntity<PedidoResponseDTO> obtenerPedidoActivoPorMesa(@PathVariable Long mesaId) {
+        try {
+            PedidoResponseDTO respuesta = pedidoService.obtenerPedidoActivoPorMesa(mesaId);
+            return ResponseEntity.ok(respuesta);
+        } catch (ResourceNotFoundException e) {
+            // Si el servicio lanza que no hay pedido activo, respondemos 204 (No Content) de forma limpia
+            return ResponseEntity.noContent().build();
+        }
+    }
 }

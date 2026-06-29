@@ -1,5 +1,6 @@
 package com.Sistema.Backend.Pedidos.Repository;
 
+import com.Sistema.Backend.Pedidos.Dto.Response.PedidoResponseDTO;
 import com.Sistema.Backend.Pedidos.Entity.EstadoPedido;
 import com.Sistema.Backend.Pedidos.Entity.Pedido;
 import com.Sistema.Backend.Reportes.Dto.VentasPorPeriodoDTO;
@@ -20,7 +21,12 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     // Para el monitor de cocina: ver pedidos pendientes o en preparación
     // Ordenados por fecha para atender al que llegó primero (FIFO)
-    List<Pedido> findByEstadoInOrderByFechaCreacionAsc(List<EstadoPedido> estados);
+    @Query("SELECT DISTINCT p FROM Pedido p " +
+            "LEFT JOIN FETCH p.detalles d " +
+            "LEFT JOIN FETCH d.producto " +
+            "WHERE p.estado IN :estados " +
+            "ORDER BY p.fechaCreacion ASC")
+    List<Pedido> findByEstadoInOrderByFechaCreacionAsc(@Param("estados") List<EstadoPedido> estados);
 
     // Para buscar rápidamente por los últimos dígitos de WhatsApp
     List<Pedido> findByWhatsappFinal(String whatsappFinal);
@@ -65,4 +71,6 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     List<Object[]> obtenerVentasDiariasNativo(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
 
     Optional<Pedido> findByCodigo(String codigo);
+
+    Optional<Pedido> findByMesaIdAndEstadoIn(Long mesaId, List<EstadoPedido> estados);
 }
