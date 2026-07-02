@@ -15,7 +15,7 @@ public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
 
     // Consulta paginada avanzada para el buscador en tiempo real del Frontend
     @Query("SELECT p FROM Proveedor p WHERE " +
-            "(:nombre IS NULL OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', :nombre, '%'))) AND " +
+            "(CAST(:nombre AS string) IS NULL OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', CAST(:nombre AS string), '%'))) AND " +
             "(:activo IS NULL OR p.activo = :activo)")
     Page<Proveedor> listarPaginado(
             @Param("nombre") String nombre,

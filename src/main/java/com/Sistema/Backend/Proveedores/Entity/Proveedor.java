@@ -17,7 +17,7 @@ public class Proveedor {
     private Long id;
 
     @NotBlank(message = "El nombre del proveedor es obligatorio")
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(name = "nombre", length = 150, columnDefinition = "VARCHAR(150)")
     private String nombre;
 
     @Column(length = 100)
