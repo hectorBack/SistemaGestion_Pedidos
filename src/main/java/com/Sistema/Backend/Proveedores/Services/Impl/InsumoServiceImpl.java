@@ -78,10 +78,19 @@ public class InsumoServiceImpl implements InsumoService {
         log.info("Buscando lista paginada de insumos. Filtros -> Nombre: '{}', Activo: {}", nombre, activo);
         Page<Insumo> paginaInsumos;
 
-        if (nombre != null && !nombre.trim().isEmpty()) {
+        boolean tieneNombre = (nombre != null && !nombre.trim().isEmpty());
+        boolean tieneEstado = (activo != null);
+
+        if (tieneNombre && tieneEstado) {
             paginaInsumos = insumoRepository.findByNombreContainingIgnoreCaseAndActivo(nombre, activo, pageable);
-        } else {
+        } else if (tieneNombre) {
+            // 🌟 NUEVO: Busca por nombre sin importar si está activo o inactivo
+            paginaInsumos = insumoRepository.findByNombreContainingIgnoreCase(nombre, pageable);
+        } else if (tieneEstado) {
             paginaInsumos = insumoRepository.findByActivo(activo, pageable);
+        } else {
+            // 🌟 NUEVO: Si no hay filtros (Todos los estados y nombre vacío), trae todo el catálogo
+            paginaInsumos = insumoRepository.findAll(pageable);
         }
 
         log.info("Búsqueda finalizada. Total de elementos encontrados: {}", paginaInsumos.getTotalElements());

@@ -14,4 +14,7 @@ public interface InsumoRepository extends JpaRepository<Insumo, Long> {
 
     // 🌟 Busca todos los insumos que coincidan con el estado activo (Paginado)
     Page<Insumo> findByActivo(Boolean activo, Pageable pageable);
+
+    // Este es el método que te faltaba para que funcione la opción "Todos los Estados" junto con el buscador
+    Page<Insumo> findByNombreContainingIgnoreCase(String nombre, Pageable pageable);
 }
