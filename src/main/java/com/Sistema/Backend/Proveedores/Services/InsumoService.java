@@ -26,4 +26,6 @@ public interface InsumoService {
 
     // Cambiar el estado del insumo a inactivo (Soft Delete)
     void eliminarInsumo(Long id);
+
+    void cambiarEstado(Long id, Boolean activo);
 }

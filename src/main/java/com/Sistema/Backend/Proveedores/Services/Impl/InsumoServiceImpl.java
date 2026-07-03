@@ -130,4 +130,21 @@ public class InsumoServiceImpl implements InsumoService {
 
         log.info("Insumo con ID {} ha sido desactivado (eliminado lógicamente) con éxito", id);
     }
+
+    @Override
+    @Transactional
+    public void cambiarEstado(Long id, Boolean activo) {
+        log.info("Solicitud para cambiar el estado del insumo con ID: {} a activo={}", id, activo);
+
+        Insumo insumo = insumoRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("No se pudo cambiar el estado. Insumo con ID {} no fue encontrado", id);
+                    return new EntityNotFoundException("Insumo no encontrado con el ID: " + id);
+                });
+
+        insumo.setActivo(activo);
+        insumoRepository.save(insumo);
+
+        log.info("Estado del insumo con ID {} actualizado exitosamente a: {}", id, activo);
+    }
 }

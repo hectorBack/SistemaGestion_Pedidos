@@ -93,4 +93,18 @@ public class InsumoController {
         insumoService.eliminarInsumo(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/estado")
+    @Operation(summary = "Cambiar estado del insumo", description = "Actualiza de forma parcial únicamente el estado de actividad (activo/inactivo) mediante el switch rápido")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Estado modificado exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Insumo no encontrado")
+    })
+    public ResponseEntity<Void> cambiarEstado(
+            @PathVariable Long id,
+            @RequestParam Boolean activo) {
+
+        insumoService.cambiarEstado(id, activo);
+        return ResponseEntity.noContent().build();
+    }
 }
