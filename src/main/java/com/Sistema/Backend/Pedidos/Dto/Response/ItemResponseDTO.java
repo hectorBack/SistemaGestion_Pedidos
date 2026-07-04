@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,4 +15,5 @@ public class ItemResponseDTO {
     private int cantidad;
     private BigDecimal precioUnitario;
     private String notas;
+    private List<String> sabores;
 }

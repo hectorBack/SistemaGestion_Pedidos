@@ -24,6 +24,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     @Query("SELECT DISTINCT p FROM Pedido p " +
             "LEFT JOIN FETCH p.detalles d " +
             "LEFT JOIN FETCH d.producto " +
+            "LEFT JOIN FETCH d.sabores " +
             "WHERE p.estado IN :estados " +
             "ORDER BY p.fechaCreacion ASC")
     List<Pedido> findByEstadoInOrderByFechaCreacionAsc(@Param("estados") List<EstadoPedido> estados);
@@ -39,9 +40,10 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     BigDecimal sumarTotalVentasPorPeriodo(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
 
     // Filtro avanzado: Por estado (opcional) y rango de fechas
-    @Query("SELECT p FROM Pedido p WHERE " +
-            "(:estado IS NULL OR p.estado = :estado) AND " +
-            "(p.fechaCreacion BETWEEN :inicio AND :fin)" +
+    @Query("SELECT DISTINCT p FROM Pedido p " +
+            "LEFT JOIN FETCH p.detalles d " +   // 👈 Deja solo este fetch
+            "WHERE (:estado IS NULL OR p.estado = :estado) AND " +
+            "(p.fechaCreacion BETWEEN :inicio AND :fin) " +
             "ORDER BY p.fechaCreacion DESC")
     Page<Pedido> filtrarPedidos(
             @Param("estado") EstadoPedido estado,

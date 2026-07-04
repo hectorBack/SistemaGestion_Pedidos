@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class ItemPedidoRequestDTO {
@@ -18,4 +20,6 @@ public class ItemPedidoRequestDTO {
 
     // Aquí capturamos el "Sin cebolla", etc.
     private String notas;
+
+    private List<String> sabores;
 }

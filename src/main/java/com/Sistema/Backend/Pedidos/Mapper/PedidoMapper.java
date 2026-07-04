@@ -6,6 +6,7 @@ import com.Sistema.Backend.Pedidos.Entity.DetallePedido;
 import com.Sistema.Backend.Pedidos.Entity.Pedido;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 @Component
@@ -44,6 +45,13 @@ public class PedidoMapper {
         dto.setCantidad(detalle.getCantidad());
         dto.setPrecioUnitario(detalle.getPrecioUnitario());
         dto.setNotas(detalle.getNotas());
+
+        // 🌶️ SOLUCCIÓN: Forzamos la inicialización limpia de la lista para el JSON de respuesta
+        if (detalle.getSabores() != null) {
+            dto.setSabores(new ArrayList<>(detalle.getSabores()));
+        } else {
+            dto.setSabores(new ArrayList<>());
+        }
         return dto;
     }
 }

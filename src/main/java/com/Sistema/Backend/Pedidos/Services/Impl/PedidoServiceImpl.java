@@ -165,6 +165,13 @@ public class PedidoServiceImpl implements PedidoService {
 
             System.out.println("Nota recibida en el backend: " + itemDto.getNotas());
             detalle.setNotas(itemDto.getNotas());
+
+            // 🌶️ ¡LA LÍNEA QUE FALTABA PARA LOS SABORES!
+            if (itemDto.getSabores() != null) {
+                detalle.setSabores(new ArrayList<>(itemDto.getSabores()));
+            } else {
+                detalle.setSabores(new ArrayList<>()); // Evitamos NullPointerException
+            }
             return detalle;
         }
 
@@ -324,6 +331,12 @@ public class PedidoServiceImpl implements PedidoService {
             detalle.setPrecioUnitario(producto.getPrecio());
             detalle.setNotas(itemDto.getNotas());
             detalle.setEnviadoACocina(false); // 🌟 Es nuevo, va para la cocina
+
+            if (itemDto.getSabores() != null) {
+                detalle.setSabores(new ArrayList<>(itemDto.getSabores()));
+            } else {
+                detalle.setSabores(new ArrayList<>());
+            }
 
             // Calcular el acumulado del dinero nuevo
             BigDecimal costoItem = producto.getPrecio().multiply(BigDecimal.valueOf(itemDto.getCantidad()));

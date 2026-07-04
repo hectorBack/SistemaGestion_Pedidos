@@ -6,8 +6,12 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "detalle_pedidos")
@@ -42,4 +46,13 @@ public class DetallePedido {
 
     @Column(name = "enviado_a_cocina", nullable = false, columnDefinition = "boolean default false")
     private boolean enviadoACocina = false; // Por defecto los nuevos items entran en false
+
+    @ElementCollection(fetch = FetchType.EAGER) // Aquí es mejor LAZY por rendimiento de los pedidos
+    @CollectionTable(
+            name = "detalle_pedido_sabores", // Tabla diferente para las elecciones del pedido
+            joinColumns = @JoinColumn(name = "detalle_pedido_id")
+    )
+    @Column(name = "sabor")
+    @Fetch(FetchMode.SUBSELECT)
+    private List<String> sabores = new ArrayList<>();
 }
