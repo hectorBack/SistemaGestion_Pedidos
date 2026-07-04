@@ -3,10 +3,17 @@ package com.Sistema.Backend.Proveedores.Mapper;
 import com.Sistema.Backend.Categorias.Entity.ProveedorInsumo;
 import com.Sistema.Backend.Proveedores.Dto.Request.ProveedorInsumoRequestDTO;
 import com.Sistema.Backend.Proveedores.Dto.Response.ProveedorInsumoResponseDTO;
+import com.Sistema.Backend.Proveedores.Repository.InsumoRepository;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ProveedorInsumoMapper {
+
+    private final InsumoRepository insumoRepository;
+
+    public ProveedorInsumoMapper(InsumoRepository insumoRepository) {
+        this.insumoRepository = insumoRepository;
+    }
 
     // Convierte de Request DTO a Entidad (Nota: El proveedor se debe setear en el Service)
     public ProveedorInsumo toEntity(ProveedorInsumoRequestDTO dto) {
@@ -33,12 +40,25 @@ public class ProveedorInsumoMapper {
         dto.setPrecioCompra(entity.getPrecioCompra());
         dto.setUnidadCompra(entity.getUnidadCompra());
         dto.setFactorConversion(entity.getFactorConversion());
-        dto.setActivo(entity.getActivo());
 
         // 🌟 Extraemos de forma segura los datos de la relación ManyToOne
         if (entity.getProveedor() != null) {
             dto.setProveedorId(entity.getProveedor().getId());
             dto.setProveedorNombre(entity.getProveedor().getNombre());
+        }
+        
+        // 🌟 NUEVO: Buscamos el nombre del insumo usando el 'insumoId' plano de tu registro
+        if (entity.getInsumoId() != null) {
+            insumoRepository.findById(entity.getInsumoId())
+                    .ifPresent(insumo -> {
+                        dto.setInsumoNombre(insumo.getNombre());
+                        dto.setActivo(insumo.getActivo()); // 🌟 ¡AQUÍ! Extrae el estado real del insumo global
+                    });
+        }
+
+        // Por seguridad, si el insumo no existiera por alguna razón extrema, asegurar un fallback
+        if (dto.getActivo() == null) {
+            dto.setActivo(entity.getActivo());
         }
 
         return dto;

@@ -13,6 +13,7 @@ public class ProveedorInsumoResponseDTO {
     private Long proveedorId;
     private String proveedorNombre; // 🌟 Muy útil para mostrar en la UI
     private Long insumoId;
+    private String insumoNombre;
     private BigDecimal precioCompra;
     private String unidadCompra;
     private Integer factorConversion;
