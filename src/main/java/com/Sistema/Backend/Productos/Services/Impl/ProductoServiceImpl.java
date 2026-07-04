@@ -220,6 +220,10 @@ public class ProductoServiceImpl implements ProductoService {
         producto.setPrecio(request.getPrecio());
         producto.setDisponible(request.isDisponible());
 
+        if (request.getSabores() != null) {
+            producto.setSabores(request.getSabores());
+        }
+
         // MEJORA: Solo actualiza la URL si el DTO trae una nueva de Cloudinary
         if (request.getUrlImagen() != null && !request.getUrlImagen().trim().isEmpty()) {
             producto.setUrlImagen(request.getUrlImagen());

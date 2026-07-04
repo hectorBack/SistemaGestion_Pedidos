@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "productos")
@@ -38,4 +40,10 @@ public class Producto {
 
     @Column(name = "url_imagen")
     private String urlImagen;
+
+    // 🌟 LA SOLUCIÓN IDEAL: Lista de sabores/variantes sin crear otra entidad
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "producto_sabores", joinColumns = @JoinColumn(name = "producto_id"))
+    @Column(name = "sabor")
+    private List<String> sabores = new ArrayList<>();
 }

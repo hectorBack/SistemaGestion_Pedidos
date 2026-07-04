@@ -27,6 +27,7 @@ public class ProductoMapper {
         dto.setPrecio(producto.getPrecio());
         dto.setDisponible(producto.isDisponible());
         dto.setActivo(producto.getActivo());
+        dto.setSabores(producto.getSabores());
 
         if (producto.getCategoria() != null){
             dto.setCategoriaId(producto.getCategoria().getId());
@@ -44,6 +45,7 @@ public class ProductoMapper {
         producto.setDescripcion(dto.getDescripcion());
         producto.setPrecio(dto.getPrecio());
         producto.setDisponible(dto.isDisponible());
+        producto.setSabores(dto.getSabores());
 
         if (dto.getCategoriaId() != null){
             Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
@@ -53,5 +55,28 @@ public class ProductoMapper {
 
         producto.setUrlImagen(dto.getUrlImagen());
         return producto;
+    }
+
+    // 🌟 AGREGA ESTE MÉTODO AL FINAL DE TU ARCHIVO (Antes de cerrar la última llave)
+    public void updateEntityFromDTO(ProductoRequestDTO dto, Producto producto) {
+        if (dto == null || producto == null) return;
+
+        producto.setNombre(dto.getNombre());
+        producto.setDescripcion(dto.getDescripcion());
+        producto.setPrecio(dto.getPrecio());
+        producto.setDisponible(dto.isDisponible());
+        producto.setUrlImagen(dto.getUrlImagen());
+
+        // Actualizamos la lista de sabores de forma segura
+        if (dto.getSabores() != null) {
+            producto.setSabores(dto.getSabores());
+        }
+
+        // Actualizamos la categoría si cambió
+        if (dto.getCategoriaId() != null) {
+            Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Categoria no encontrada con ID: " + dto.getCategoriaId()));
+            producto.setCategoria(categoria);
+        }
     }
 }

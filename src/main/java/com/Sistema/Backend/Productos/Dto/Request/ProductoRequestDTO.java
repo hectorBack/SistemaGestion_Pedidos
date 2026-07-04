@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 public class ProductoRequestDTO {
@@ -23,4 +24,6 @@ public class ProductoRequestDTO {
 
     private Long categoriaId;
     private String urlImagen;
+
+    private List<String> sabores;
 }
