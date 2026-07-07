@@ -78,6 +78,13 @@ public class PedidoServiceImpl implements PedidoService {
         if (request.getMesaId() != null) {
             Mesa mesa = mesaRepository.findById(request.getMesaId())
                     .orElseThrow(() -> new ResourceNotFoundException("La mesa con ID " + request.getMesaId() + " no existe"));
+
+            // 🚀 CAMBIO EXPLICITO: Cambiar estado a ocupada
+            mesa.setEstado(EstadoMesa.OCUPADA); // Asegúrate de usar tu Enum o String correspondiente (ej. "OCUPADA" o EstadoMesa.OCUPADA)
+
+            // Guardamos el cambio en la mesa
+            mesaRepository.save(mesa);
+
             pedido.setMesa(mesa);
         }
         return pedido;
@@ -218,7 +225,15 @@ public class PedidoServiceImpl implements PedidoService {
 
             // Opcional: Si en tu entidad Mesa tienes una lista de pedidos, o si en Pedido
             // la relación requiere actualizar ambos lados, asegúrate de refrescarlo.
-            log.info("¡Mesa {} liberada con éxito en la base de datos!", mesa.getNumero());
+            log.info("¡Mesa {} liberada como SUCIA con éxito!", mesa.getNumero());
+        }
+
+        // 🚀 NUEVA LÓGICA AGREGADA: Si el pedido se CANCELA a través de este método, liberamos la mesa
+        if (nuevoEstado == EstadoPedido.CANCELADO && pedido.getMesa() != null) {
+            var mesa = pedido.getMesa();
+            mesa.setEstado(EstadoMesa.LIBRE); // Cambia a LIBRE para que vuelva a estar disponible enseguba
+            mesaRepository.saveAndFlush(mesa);
+            log.info("¡Mesa {} liberada como LIBRE por cancelación del pedido!", mesa.getNumero());
         }
 
         // Guardamos el pedido
