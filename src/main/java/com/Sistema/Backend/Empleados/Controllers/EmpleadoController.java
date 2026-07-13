@@ -31,7 +31,7 @@ public class EmpleadoController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO')")
     @Operation(summary = "Listar empleados de forma paginada", description = "Consulta paginada con filtros opcionales por nombre, puesto y estado de actividad")
     @ApiResponse(responseCode = "200", description = "Consulta paginada procesada con éxito")
     public ResponseEntity<Page<EmpleadoResponseDTO>> listarPaginado(

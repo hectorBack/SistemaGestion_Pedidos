@@ -103,7 +103,7 @@ public class PedidoController {
     }
 
     @GetMapping("/filtrar")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO')")
     @Operation(summary = "Filtrar pedidos de forma avanzada y paginada", description = "Permite buscar pedidos segmentando opcionalmente por estado y obligatoriamente por un rango de fechas")
     @ApiResponse(responseCode = "200", description = "Consulta paginada devuelta")
     public ResponseEntity<Page<PedidoResponseDTO>> filtrar(

@@ -1,28 +1,39 @@
 package com.Sistema.Backend.Usuarios.Services.Impl;
 
+import com.Sistema.Backend.Usuarios.Dto.Request.UsuarioRequestDTO;
 import com.Sistema.Backend.Usuarios.Dto.Response.UsuarioResponseDTO;
+import com.Sistema.Backend.Usuarios.Entity.Rol;
+import com.Sistema.Backend.Usuarios.Entity.TipoRol;
 import com.Sistema.Backend.Usuarios.Entity.Usuario;
 import com.Sistema.Backend.Usuarios.Mapper.UsuarioMapper;
+import com.Sistema.Backend.Usuarios.Repository.RolRepository;
 import com.Sistema.Backend.Usuarios.Repository.UsuarioRepository;
 import com.Sistema.Backend.Usuarios.Services.UsuarioService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final RolRepository rolRepository;
     private final UsuarioMapper usuarioMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioServiceImpl(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper) {
+    public UsuarioServiceImpl(UsuarioRepository usuarioRepository, RolRepository rolRepository, UsuarioMapper usuarioMapper, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
+        this.rolRepository = rolRepository;
         this.usuarioMapper = usuarioMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -35,6 +46,44 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         // Mapeamos de forma óptima cada elemento de la página de Entidad a DTO
         return usuariosPage.map(usuarioMapper::toResponse);
+    }
+
+    @Override
+    @Transactional
+    public UsuarioResponseDTO registrarUsuario(UsuarioRequestDTO dto) {
+        log.info("Registrando un nuevo usuario en el sistema con username: {}", dto.getUsername());
+
+        if (usuarioRepository.existsByUsername(dto.getUsername())) {
+            throw new RuntimeException("El nombre de usuario ya está en uso");
+        }
+
+        // Convertir datos básicos usando el mapper corregido
+        Usuario usuario = usuarioMapper.toEntity(dto);
+
+        usuario.setPassword(passwordEncoder.encode(dto.getPassword()));
+        usuario.setActivo(true);
+
+        // 2. ASIGNAR ROLES DESDE LA BASE DE DATOS
+        if (dto.getRoles() != null && !dto.getRoles().isEmpty()) {
+            Set<Rol> rolesPersistidos = dto.getRoles().stream()
+                    .map(nombreRolStr -> {
+                        // Convertimos el String al Enum correspondiente
+                        TipoRol nombreEnum = TipoRol.valueOf(nombreRolStr.toUpperCase());
+
+                        // Buscamos el rol real que ya existe en la base de datos
+                        return rolRepository.findByNombre(nombreEnum)
+                                .orElseThrow(() -> new RuntimeException("Error: El rol " + nombreRolStr + " no existe en la BD."));
+                    })
+                    .collect(Collectors.toSet());
+
+            // Le asignamos los roles reales administrados por JPA/Hibernate
+            usuario.setRoles(rolesPersistidos);
+        }
+
+        Usuario usuarioGuardado = usuarioRepository.save(usuario);
+        log.info("Usuario creado exitosamente con ID: {}", usuarioGuardado.getId());
+
+        return usuarioMapper.toResponse(usuarioGuardado);
     }
 
     @Override

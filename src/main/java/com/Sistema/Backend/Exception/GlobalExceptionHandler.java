@@ -4,6 +4,8 @@ import com.Sistema.Backend.Config.ErrorRespuestaDTO;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -65,5 +67,26 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorRespuestaDTO> manejarNegocio(BusinessException ex, WebRequest request) {
         ErrorRespuestaDTO error = new ErrorRespuestaDTO(LocalDateTime.now(), "Error de operación", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ErrorRespuestaDTO> manejarUsuarioDeshabilitado(DisabledException ex, WebRequest request) {
+        ErrorRespuestaDTO error = new ErrorRespuestaDTO(
+                LocalDateTime.now(),
+                "CUENTA_DESHABILITADA", // Este código es el que leerá tu frontend en Vue
+                "Tu cuenta se encuentra temporalmente deshabilitada. Contacta al administrador."
+        );
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN); // Retorna 403 Forbidden
+    }
+
+    // 5. Captura explícita de credenciales incorrectas (401)
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorRespuestaDTO> manejarCredencialesIncorrectas(BadCredentialsException ex, WebRequest request) {
+        ErrorRespuestaDTO error = new ErrorRespuestaDTO(
+                LocalDateTime.now(),
+                "CREDANCIALES_INVALIDAS",
+                "El nombre de usuario o la contraseña son incorrectos."
+        );
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED); // Retorna 401 Unauthorized
     }
 }

@@ -1,5 +1,6 @@
 package com.Sistema.Backend.Usuarios.Controllers;
 
+import com.Sistema.Backend.Config.ErrorRespuestaDTO;
 import com.Sistema.Backend.Usuarios.Dto.Request.LoginRequestDTO;
 import com.Sistema.Backend.Usuarios.Dto.Request.RegistroUsuarioRequestDTO;
 import com.Sistema.Backend.Usuarios.Dto.Response.JwtResponseDTO;
@@ -11,8 +12,11 @@ import com.Sistema.Backend.Usuarios.Repository.UsuarioRepository;
 import com.Sistema.Backend.Usuarios.Security.JwtUtils;
 import com.Sistema.Backend.Usuarios.Security.Services.UserDetailsImpl;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,15 +54,12 @@ public class AuthController {
     // 1. ENDPOINT DE INICIO DE SESIÓN (LOGIN)
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequestDTO loginRequest) {
-
         try {
-            // Validamos credenciales usando el AuthenticationManager
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // Generamos el token JWT
             String jwt = jwtUtils.generateJwtToken(authentication);
 
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -68,11 +70,34 @@ public class AuthController {
             return ResponseEntity.ok(new JwtResponseDTO(jwt, "Bearer", userDetails.getId(),
                     userDetails.getUsername(), userDetails.getEmail(), roles));
 
-        } catch (Exception e){
-            // 🔥 ESTO te dirá exactamente en la consola si es contraseña incorrecta, usuario deshabilitado, etc.
-            System.out.println("ERROR CRÍTICO EN LOGIN: " + e.getMessage());
+        } catch (DisabledException e) {
+            // Retornamos DIRECTAMENTE tu ErrorRespuestaDTO con un 403 Forbidden seguro
+            ErrorRespuestaDTO errorDto = new ErrorRespuestaDTO(
+                    LocalDateTime.now(),
+                    "CUENTA_DESHABILITADA",
+                    "Tu cuenta se encuentra temporalmente deshabilitada. Contacta al administrador."
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorDto);
+
+        } catch (BadCredentialsException e) {
+            // Credenciales incorrectas comunes (401 Unauthorized)
+            ErrorRespuestaDTO errorDto = new ErrorRespuestaDTO(
+                    LocalDateTime.now(),
+                    "CREDANCIALES_INVALIDAS",
+                    "El nombre de usuario o la contraseña son incorrectos."
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDto);
+
+        } catch (Exception e) {
+            System.out.println("ERROR CRÍTICO INESPERADO EN LOGIN: " + e.getMessage());
             e.printStackTrace();
-            throw e;
+
+            ErrorRespuestaDTO errorDto = new ErrorRespuestaDTO(
+                    LocalDateTime.now(),
+                    "ERROR_INTERNO",
+                    "Ocurrió un error inesperado en el servidor."
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDto);
         }
     }
 

@@ -33,7 +33,7 @@ public class PromocionController {
 
     //Listar Paginado
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'CLIENTE')")
     @Operation(summary = "Listar promociones con filtros dinámicos (Paginado)", description = "Consulta avanzada para el panel de control con soporte de filtros por nombre y estado de actividad")
     @ApiResponse(responseCode = "200", description = "Página de promociones procesada con éxito")
     public ResponseEntity<Page<PromocionResponseDTO>> listarPromociones(

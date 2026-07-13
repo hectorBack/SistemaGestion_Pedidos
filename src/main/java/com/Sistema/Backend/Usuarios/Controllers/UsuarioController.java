@@ -1,14 +1,17 @@
 package com.Sistema.Backend.Usuarios.Controllers;
 
+import com.Sistema.Backend.Usuarios.Dto.Request.UsuarioRequestDTO;
 import com.Sistema.Backend.Usuarios.Dto.Response.UsuarioResponseDTO;
 import com.Sistema.Backend.Usuarios.Services.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +38,18 @@ public class UsuarioController {
         return ResponseEntity.ok(pagina);
     }
 
+    @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "Registrar un nuevo usuario", description = "Crea un nuevo empleado con sus respectivas credenciales y roles asignados")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Usuario registrado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Los datos enviados no son válidos o el username ya existe")
+    })
+    public ResponseEntity<UsuarioResponseDTO> registrar(@Valid @RequestBody UsuarioRequestDTO dto) {
+        UsuarioResponseDTO nuevoUsuario = usuarioService.registrarUsuario(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Obtener usuario por ID", description = "Busca un usuario específico del sistema por su clave primaria")
@@ -48,9 +63,9 @@ public class UsuarioController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}/estado")
+    @PatchMapping("/{id}/estado")
     @PreAuthorize("hasAuthority('ADMIN')")
-    @Operation(summary = "Cambiar estado de actividad", description = "Permite activar o desactivar una cuenta de empleado de forma lógica (baja del personal)")
+    @Operation(summary = "Cambiar estado de actividad de forma parcial", description = "Permite activar o desactivar una cuenta de empleado de forma lógica (baja del personal) usando PATCH")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Estado modificado correctamente"),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
