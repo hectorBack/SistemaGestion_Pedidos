@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class PromocionController {
 
     //Listar Paginado
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO')")
     @Operation(summary = "Listar promociones con filtros dinámicos (Paginado)", description = "Consulta avanzada para el panel de control con soporte de filtros por nombre y estado de actividad")
     @ApiResponse(responseCode = "200", description = "Página de promociones procesada con éxito")
     public ResponseEntity<Page<PromocionResponseDTO>> listarPromociones(
@@ -44,6 +46,7 @@ public class PromocionController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Registrar nueva promoción", description = "Crea una promoción parametrizada. Si no se envía un productoId, se asume que el descuento es global")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Promoción registrada exitosamente"),
@@ -54,6 +57,7 @@ public class PromocionController {
     }
 
     @GetMapping("/vigentes")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'CLIENTE')")
     @Operation(summary = "Obtener promociones vigentes", description = "Retorna un arreglo plano con las promociones que se intersectan de forma válida con la fecha y hora actual")
     @ApiResponse(responseCode = "200", description = "Promociones vigentes recuperadas")
     public List<PromocionResponseDTO> getPromocionesVigentes() {
@@ -62,6 +66,7 @@ public class PromocionController {
 
     // Actualizar promocion completo
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Actualizar promoción completa", description = "Reemplaza los atributos de una promoción y valida la existencia del producto asignado")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Promoción actualizada correctamente"),
@@ -72,6 +77,7 @@ public class PromocionController {
     }
 
     @PatchMapping("/{id}/desactivar")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Desactivar promoción", description = "Cambia el flag de actividad a falso de manera inmediata para pausar el descuento comercial")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Promoción pausada exitosamente"),
@@ -83,6 +89,7 @@ public class PromocionController {
     }
 
     @PatchMapping("/{id}/activar")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Activar promoción", description = "Cambia el flag de actividad a verdadero de manera inmediata para reanudar el descuento comercial")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Promoción activada exitosamente"),
@@ -94,6 +101,7 @@ public class PromocionController {
     }
 
     @GetMapping("/stats")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Obtener estadísticas globales", description = "Retorna el conteo consolidado de todo el universo de promociones")
     public ResponseEntity<PromocionStatsDTO> getStats() {
         return ResponseEntity.ok(promocionService.obtenerEstadisticasGlobales());

@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -34,6 +35,7 @@ public class PagoController {
 
     // Registrar un nuevo pago (Caja / Punto de Venta)
     @PostMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'CLIENTE')")
     @Operation(summary = "Registrar un nuevo pago", description = "Registra la transacción de una venta en el Punto de Venta. Si el pago es exitoso, dispara la orden a cocina de forma interna")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Pago procesado y registrado con éxito"),
@@ -46,6 +48,7 @@ public class PagoController {
 
     // 2. Obtener un pago por su código público de transacción (e.g., PAG-8A3F1)
     @GetMapping("/codigo/{codigoTransaccion}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'CLIENTE')")
     @Operation(summary = "Obtener pago por su código de transacción", description = "Busca los metadatos de un cobro utilizando el hash o código alfanumérico público")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Transacción localizada"),
@@ -58,6 +61,7 @@ public class PagoController {
 
     // 3. Obtener el pago asociado a un pedido específico usando el ID del pedido
     @GetMapping("/pedido/{pedidoId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'CLIENTE')")
     @Operation(summary = "Obtener pago por ID del Pedido", description = "Permite inspeccionar el método de pago o el estado de cobro de un ticket específico")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pago asociado encontrado"),
@@ -70,6 +74,7 @@ public class PagoController {
 
     // 4. Listar todos los pagos (Útil para reportería o paneles de administración)
     @GetMapping("/filtrar")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Filtrar y auditar pagos (Reportería)", description = "Consulta paginada obligatoria por rangos de fechas (Formato ISO YYYY-MM-DD) y método de pago opcional para auditorías financieras")
     @ApiResponse(responseCode = "200", description = "Listado de auditoría generado correctamente")
     public ResponseEntity<HistorialPagosResponseDTO> filtrarPagos(
@@ -82,6 +87,7 @@ public class PagoController {
     }
 
     @PatchMapping("/{id}/reembolsar")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Reembolsar una transacción aprobada", description = "Cambia el estado de un pago a REEMBOLSADO y añade las observaciones correspondientes en la bitácora de caja.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Transacción reembolsada con éxito"),

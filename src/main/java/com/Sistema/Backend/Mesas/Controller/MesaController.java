@@ -6,7 +6,6 @@ import com.Sistema.Backend.Mesas.Dto.Response.MesaResponseDTO;
 import com.Sistema.Backend.Mesas.Entity.EstadoMesa;
 import com.Sistema.Backend.Mesas.Services.MesaService;
 import com.Sistema.Backend.Pedidos.Dto.Request.ComandaMesaRequestDTO;
-import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -14,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,12 +25,12 @@ public class MesaController {
 
     private final MesaService mesaService;
 
-    // Inyección por constructor idéntica a CategoriaController
     public MesaController(MesaService mesaService) {
         this.mesaService = mesaService;
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'COCINERO', 'CLIENTE')")
     @Operation(summary = "Listar mesas", description = "Retorna el listado plano de todas las mesas del salón. Permite filtrar opcionalmente por su estado operativo actual.")
     @ApiResponse(responseCode = "200", description = "Consulta procesada con éxito")
     public ResponseEntity<List<MesaResponseDTO>> listarTodas(@RequestParam(required = false) EstadoMesa estado) {
@@ -41,6 +41,7 @@ public class MesaController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'COCINERO', 'CLIENTE')")
     @Operation(summary = "Obtener mesa por ID", description = "Busca los metadatos operativos de una mesa específica mediante su clave primaria")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Mesa localizada con éxito"),
@@ -52,6 +53,7 @@ public class MesaController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Registrar nueva mesa", description = "Crea una nueva mesa en el salón en estado inicial LIBRE validando la unicidad del identificador numérico")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Mesa registrada exitosamente"),
@@ -63,6 +65,7 @@ public class MesaController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Actualizar propiedades físicas de la mesa", description = "Permite modificar el identificador numérico y la capacidad de comensales")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Propiedades actualizadas correctamente"),
@@ -76,6 +79,7 @@ public class MesaController {
     }
 
     @PostMapping("/{id}/abrir")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO')")
     @Operation(summary = "Abrir mesa (Asignar Comanda)", description = "Cambia el estado de una mesa a OCUPADA vinculando obligatoriamente el mesero responsable y el ID de pedido generado")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Mesa abierta exitosamente, flujo de comanda activo"),
@@ -91,6 +95,7 @@ public class MesaController {
     }
 
     @PostMapping("/{id}/reservar")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO')")
     @Operation(summary = "Reservar una mesa", description = "Bloquea una mesa que esté en estado LIBRE e introduce las anotaciones del cliente")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Mesa reservada correctamente"),
@@ -104,6 +109,7 @@ public class MesaController {
     }
 
     @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO')")
     @Operation(summary = "Cambio de estado rápido", description = "Permite transicionar rápidamente el flujo operativo entre estados (ej. pasar de SUCIA a LIBRE al terminar la limpieza)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Estado operativo modificado con éxito"),

@@ -1,0 +1,18 @@
+package com.Sistema.Backend.Usuarios.Repository;
+
+import com.Sistema.Backend.Usuarios.Entity.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+    Optional<Usuario> findByUsername(String username);
+
+    // Opcional por si en el futuro decides permitir login con Email
+    Optional<Usuario> findByEmail(String email);
+
+    Boolean existsByUsername(String username);
+    Boolean existsByEmail(String email);
+}

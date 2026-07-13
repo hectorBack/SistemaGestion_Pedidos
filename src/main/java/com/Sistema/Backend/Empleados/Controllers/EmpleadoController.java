@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class EmpleadoController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Listar empleados de forma paginada", description = "Consulta paginada con filtros opcionales por nombre, puesto y estado de actividad")
     @ApiResponse(responseCode = "200", description = "Consulta paginada procesada con éxito")
     public ResponseEntity<Page<EmpleadoResponseDTO>> listarPaginado(
@@ -43,6 +45,7 @@ public class EmpleadoController {
     }
 
     @GetMapping("/activos")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO')")
     @Operation(summary = "Listar empleados activos por puesto", description = "Retorna un arreglo plano con los empleados activos filtrados por su puesto (ideal para selectores en comandas)")
     @ApiResponse(responseCode = "200", description = "Operación exitosa")
     public ResponseEntity<List<EmpleadoResponseDTO>> listarActivosPorPuesto(
@@ -53,6 +56,7 @@ public class EmpleadoController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Obtener empleado por ID", description = "Busca un trabajador específico mediante su clave primaria")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Empleado localizado"),
@@ -64,6 +68,7 @@ public class EmpleadoController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Registrar nuevo empleado", description = "Inserta un nuevo trabajador en el sistema en estado activo")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Empleado creado exitosamente"),
@@ -75,6 +80,7 @@ public class EmpleadoController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Actualizar empleado existente", description = "Modifica los atributos del empleado según el ID proporcionado")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Cambios guardados correctamente"),
@@ -88,6 +94,7 @@ public class EmpleadoController {
     }
 
     @PatchMapping("/{id}/disponibilidad")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Cambiar disponibilidad/actividad del empleado", description = "Permite activar o desactivar de forma rápida a un empleado")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Disponibilidad modificada con éxito"),
@@ -101,6 +108,7 @@ public class EmpleadoController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Baja lógica de empleado", description = "Realiza un soft delete cambiando el flag de actividad a falso")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Baja lógica ejecutada de manera conforme"),

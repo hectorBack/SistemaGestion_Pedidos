@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class CategoriaController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'COCINERO', 'CLIENTE')")
     @Operation(summary = "Listar categorías de forma paginada", description = "Consulta paginada que permite buscar coincidencias de texto y estado de actividad ignorando el filtro de soft delete")
     @ApiResponse(responseCode = "200", description = "Consulta paginada procesada")
     public ResponseEntity<Page<CategoriaResponseDTO>> listarPaginado(
@@ -40,6 +42,7 @@ public class CategoriaController {
     }
 
     @GetMapping("/todas")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'COCINERO', 'CLIENTE')")
     @Operation(summary = "Listar todas las categorías", description = "Retorna un arreglo plano con las categorías marcadas como activas")
     @ApiResponse(responseCode = "200", description = "Operación exitosa")
     public ResponseEntity<List<CategoriaResponseDTO>> listarTodas() {
@@ -48,6 +51,7 @@ public class CategoriaController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'COCINERO', 'CLIENTE')")
     @Operation(summary = "Obtener categoría por ID", description = "Busca un registro específico por su clave primaria")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Categoría encontrada"),
@@ -59,17 +63,20 @@ public class CategoriaController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Registrar nueva categoría", description = "Crea un registro activo o levanta una fila inactiva si coincide el nombre exacto")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Creado exitosamente"),
             @ApiResponse(responseCode = "400", description = "Validación fallida o nombre ya duplicado")
     })
+
     public ResponseEntity<CategoriaResponseDTO> crear(@RequestBody CategoriaRequestDTO dto) {
         CategoriaResponseDTO nueva = categoriaService.crear(dto);
         return new ResponseEntity<>(nueva, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Actualizar categoría existente", description = "Modifica los atributos del DTO validando unicidad de nombres")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Actualizado correctamente"),
@@ -83,6 +90,7 @@ public class CategoriaController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Baja lógica de categoría", description = "Cambia el estado de una categoría a inactivo (Soft Delete)")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Baja lógica ejecutada con éxito"),
@@ -94,6 +102,7 @@ public class CategoriaController {
     }
 
     @PutMapping("/orden")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(
             summary = "Actualizar prioridad de categorías",
             description = "Recibe un arreglo plano con los IDs ordenados según el Drag and Drop de la interfaz y reasigna su prioridad masivamente"

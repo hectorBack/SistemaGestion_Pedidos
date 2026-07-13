@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -34,6 +35,7 @@ public class PedidoController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'CLIENTE')")
     @Operation(summary = "Registrar nuevo pedido / Apertura de mesa", description = "Crea una comanda inicial o un pedido desde el link del cliente asignando estado PENDIENTE")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Pedido registrado con éxito"),
@@ -44,6 +46,7 @@ public class PedidoController {
     }
 
     @GetMapping("/activos")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'COCINERO')")
     @Operation(summary = "Listar pedidos activos", description = "Retorna una lista plana de pedidos que se encuentran en preparación, cocina o pendientes para el monitor")
     @ApiResponse(responseCode = "200", description = "Operación exitosa")
     public ResponseEntity<List<PedidoResponseDTO>> obtenerActivos() {
@@ -51,6 +54,7 @@ public class PedidoController {
     }
 
     @PatchMapping("/{id}/estado/{nuevoEstado}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'COCINERO')")
     @Operation(summary = "Actualizar estado del pedido", description = "Modifica únicamente el estado operativo de la orden (ej: pasar de PENDIENTE a EN_COCINA o ENTREGADO)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Estado modificado correctamente"),
@@ -63,6 +67,7 @@ public class PedidoController {
     }
 
     @GetMapping("/buscar/whatsapp/{digitos}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'CLIENTE')")
     @Operation(summary = "Buscar pedidos por celular/WhatsApp", description = "Realiza una consulta rápida filtrando por las últimas cifras del número telefónico del cliente")
     @ApiResponse(responseCode = "200", description = "Resultados obtenidos")
     public ResponseEntity<List<PedidoResponseDTO>> buscarPorWhatsapp(@PathVariable String digitos) {
@@ -70,6 +75,7 @@ public class PedidoController {
     }
 
     @GetMapping("/historial")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Obtener historial completo", description = "Consulta sin filtros que devuelve el listado histórico de todas las comandas")
     @ApiResponse(responseCode = "200", description = "Historial procesado")
     public ResponseEntity<List<PedidoResponseDTO>> obtenerHistorial() {
@@ -77,6 +83,7 @@ public class PedidoController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO')")
     @Operation(summary = "Cancelar pedido", description = "Elimina de forma lógica o física un pedido del sistema liberando recursos asociados")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Pedido cancelado con éxito"),
@@ -88,6 +95,7 @@ public class PedidoController {
     }
 
     @GetMapping("/ventas/hoy")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Calcular ventas del día", description = "Suma el total de ingresos monetarios recaudados a partir de los pedidos liquidados hoy")
     @ApiResponse(responseCode = "200", description = "Cálculo financiero exitoso")
     public ResponseEntity<BigDecimal> obtenerVentasDia() {
@@ -95,6 +103,7 @@ public class PedidoController {
     }
 
     @GetMapping("/filtrar")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Filtrar pedidos de forma avanzada y paginada", description = "Permite buscar pedidos segmentando opcionalmente por estado y obligatoriamente por un rango de fechas")
     @ApiResponse(responseCode = "200", description = "Consulta paginada devuelta")
     public ResponseEntity<Page<PedidoResponseDTO>> filtrar(
@@ -106,6 +115,7 @@ public class PedidoController {
     }
 
     @GetMapping("/codigo/{codigo}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'CLIENTE')")
     @Operation(summary = "Buscar pedido por código alfanumérico", description = "Busca una orden específica mediante su código único de seguimiento")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pedido localizado"),
@@ -117,6 +127,7 @@ public class PedidoController {
     }
 
     @PutMapping("/{id}/agregar-items")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'CLIENTE')")
     @Operation(summary = "Agregar ítems/segunda ronda a un pedido activo", description = "Añade nuevos productos a una comanda ya abierta, recalculando automáticamente el total acumulado")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Ítems añadidos y cuenta actualizada"),
@@ -130,6 +141,7 @@ public class PedidoController {
     }
 
     @GetMapping("/activo/mesa/{mesaId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MESERO', 'CLIENTE')")
     @Operation(summary = "Obtener pedido activo de una mesa", description = "Busca si existe una cuenta abierta vinculada al ID de la mesa proporcionada")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pedido activo encontrado"),
