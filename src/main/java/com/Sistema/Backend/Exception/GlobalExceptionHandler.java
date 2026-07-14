@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice(basePackages = "com.Sistema.Backend.Controller")
@@ -88,5 +90,16 @@ public class GlobalExceptionHandler {
                 "El nombre de usuario o la contraseña son incorrectos."
         );
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED); // Retorna 401 Unauthorized
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> manejarRuntimeException(RuntimeException ex) {
+        Map<String, String> respuesta = new HashMap<>();
+
+        // Aquí capturamos el mensaje exacto: "El correo electrónico ya está registrado"
+        respuesta.put("message", ex.getMessage());
+
+        // Retornamos un 400 Bad Request en lugar de un Error 500
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
     }
 }

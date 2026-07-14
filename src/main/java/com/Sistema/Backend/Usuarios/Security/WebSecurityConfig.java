@@ -5,6 +5,7 @@ import com.Sistema.Backend.Usuarios.Security.jwt.AuthEntryPointJwt;
 import com.Sistema.Backend.Usuarios.Security.jwt.AuthTokenFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -60,8 +61,9 @@ public class WebSecurityConfig {
         http.csrf(csrf -> csrf.disable()) // Deshabilitado porque JWT nos protege contra CSRF
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/api/auth/**").permitAll()// Endpoints de Login y Registro públicos
+                .authorizeHttpRequests(auth -> auth
+                                .requestMatchers("/api/auth/**").permitAll()// Endpoints de Login y Registro públicos
+                                .requestMatchers(HttpMethod.POST, "/api/clientes").permitAll()
                                 .requestMatchers("/error").permitAll()
                                 .anyRequest().authenticated() // Cualquier otra petición requiere autenticación
                 );
