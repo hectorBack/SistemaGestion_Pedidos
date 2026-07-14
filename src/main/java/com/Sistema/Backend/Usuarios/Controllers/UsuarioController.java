@@ -29,12 +29,14 @@ public class UsuarioController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
-    @Operation(summary = "Listar usuarios de forma paginada", description = "Consulta paginada orientada a la tabla de administración para visualizar el personal activo o inactivo")
+    @Operation(summary = "Listar usuarios de forma paginada", description = "Consulta paginada orientada a la tabla de administración que permite buscar coincidencias de username y estado")
     @ApiResponse(responseCode = "200", description = "Consulta paginada procesada")
     public ResponseEntity<Page<UsuarioResponseDTO>> listarPaginado(
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) Boolean activo,
             @PageableDefault(size = 8) Pageable pageable) {
 
-        Page<UsuarioResponseDTO> pagina = usuarioService.listarUsuariosPaginados(pageable);
+        Page<UsuarioResponseDTO> pagina = usuarioService.listarUsuariosPaginados(username, activo, pageable);
         return ResponseEntity.ok(pagina);
     }
 

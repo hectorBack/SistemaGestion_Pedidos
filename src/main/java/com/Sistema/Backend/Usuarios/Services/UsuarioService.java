@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface UsuarioService {
     // Obtener todos los usuarios de forma paginada
-    Page<UsuarioResponseDTO> listarUsuariosPaginados(Pageable pageable);
+    Page<UsuarioResponseDTO> listarUsuariosPaginados(String username, Boolean activo, Pageable pageable);
 
     UsuarioResponseDTO registrarUsuario(UsuarioRequestDTO dto);
 

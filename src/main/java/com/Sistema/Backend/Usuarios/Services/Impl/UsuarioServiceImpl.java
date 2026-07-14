@@ -38,14 +38,17 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UsuarioResponseDTO> listarUsuariosPaginados(Pageable pageable) {
-        log.info("Solicitando lista de usuarios paginada. Página: {}, Tamaño: {}",
-                pageable.getPageNumber(), pageable.getPageSize());
+    public Page<UsuarioResponseDTO> listarUsuariosPaginados(String username, Boolean activo, Pageable pageable) {
+        // 🌟 Log de SLF4J idéntico al patrón de categorías
+        log.info("Búsqueda paginada de usuarios - Filtro username: '{}' - Filtro Estado (Activo): {} - Página: {} - Tamaño: {}",
+                username, activo, pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<Usuario> usuariosPage = usuarioRepository.findAll(pageable);
+        String filtroUsername = (username != null && !username.trim().isEmpty()) ? username : null;
 
-        // Mapeamos de forma óptima cada elemento de la página de Entidad a DTO
-        return usuariosPage.map(usuarioMapper::toResponse);
+        // Pasamos los filtros directamente a la query nativa del repositorio
+        Page<Usuario> usuarios = usuarioRepository.buscarTodosParaAdminPaginado(filtroUsername, activo, pageable);
+
+        return usuarios.map(usuarioMapper::toResponse);
     }
 
     @Override
