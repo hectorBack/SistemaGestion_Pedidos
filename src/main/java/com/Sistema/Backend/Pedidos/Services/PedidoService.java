@@ -68,4 +68,6 @@ public interface PedidoService {
     PedidoResponseDTO agregarItemsAPedido(Long pedidoId, AgregarItemsRequestDTO request);
 
     PedidoResponseDTO obtenerPedidoActivoPorMesa(Long mesaId);
+
+    Page<PedidoResponseDTO> obtenerHistorialClientePaginado(String nombreCliente, String estado, Pageable pageable);
 }

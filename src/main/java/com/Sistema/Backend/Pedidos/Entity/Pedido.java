@@ -24,7 +24,7 @@ public class Pedido {
     @Column(name = "codigo", nullable = false, unique = true, length = 20)
     private String codigo;
 
-    @Column(name = "whatsapp_final", nullable = true, length = 10)
+    @Column(name = "whatsapp_final", nullable = true, length = 20)
     private String whatsappFinal;
 
     @Column(name = "nombre_cliente")

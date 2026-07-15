@@ -2,6 +2,7 @@ package com.Sistema.Backend.Clientes.Controllers;
 
 import com.Sistema.Backend.Clientes.Dto.Request.ClienteRequestDTO;
 import com.Sistema.Backend.Clientes.Dto.Response.ClienteResponseDTO;
+import com.Sistema.Backend.Clientes.Entity.Cliente;
 import com.Sistema.Backend.Clientes.Services.ClienteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -14,6 +15,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -124,5 +126,13 @@ public class ClienteController {
 
         clienteService.cambiarEstadoActivo(id, nuevoEstado);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/perfil")
+    @PreAuthorize("hasAuthority('CLIENTE')")
+    public ResponseEntity<ClienteResponseDTO> obtenerPerfil(Authentication authentication) {
+        String username = authentication.getName();
+        ClienteResponseDTO perfilDTO = clienteService.obtenerPerfilPorUsername(username);
+        return ResponseEntity.ok(perfilDTO);
     }
 }

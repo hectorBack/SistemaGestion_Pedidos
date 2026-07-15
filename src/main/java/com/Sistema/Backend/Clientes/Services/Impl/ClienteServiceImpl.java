@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -160,5 +161,29 @@ public class ClienteServiceImpl implements ClienteService {
 
         clienteRepository.save(cliente);
         log.info("Soft Delete completado con éxito. Estado del cliente ID {}: {}", id, activo ? "ACTIVO" : "INACTIVO");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ClienteResponseDTO obtenerPerfilPorUsername(String username) {
+        // 1. Buscamos la entidad cliente usando el método corregido del repositorio
+        Cliente cliente = clienteRepository.findByUsuario_Username(username)
+                .orElseThrow(() -> new RuntimeException("Perfil de cliente no encontrado para el usuario: " + username));
+
+        // 2. Mapeamos la entidad y su usuario relacionado al DTO usando el Builder
+        return ClienteResponseDTO.builder()
+                .id(cliente.getId())
+                .usuarioId(cliente.getUsuario().getId())
+                .username(cliente.getUsuario().getUsername())
+                .email(cliente.getUsuario().getEmail())
+                .nombreCompleto(cliente.getNombreCompleto())
+                .telefono(cliente.getTelefono())
+                .direccionEntrega(cliente.getDireccionEntrega())
+                .activo(cliente.isActivo())
+                // Mapeamos los roles del Set<Rol> a Set<String> (ej. "CLIENTE", "ADMIN")
+                .roles(cliente.getUsuario().getRoles().stream()
+                        .map(rol -> rol.getNombre().toString()) // O rol.getNombre() según tu modelo
+                        .collect(Collectors.toSet()))
+                .build();
     }
 }

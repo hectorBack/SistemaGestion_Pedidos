@@ -2,6 +2,7 @@ package com.Sistema.Backend.Clientes.Services;
 
 import com.Sistema.Backend.Clientes.Dto.Request.ClienteRequestDTO;
 import com.Sistema.Backend.Clientes.Dto.Response.ClienteResponseDTO;
+import com.Sistema.Backend.Clientes.Entity.Cliente;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -21,4 +22,6 @@ public interface ClienteService {
 
     // Alternar estado (Soft Delete lógico)
     void cambiarEstadoActivo(Long id, boolean activo);
+
+    ClienteResponseDTO obtenerPerfilPorUsername(String username);
 }

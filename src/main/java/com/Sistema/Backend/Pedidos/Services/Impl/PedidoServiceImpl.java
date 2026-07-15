@@ -380,4 +380,23 @@ public class PedidoServiceImpl implements PedidoService {
 
         return pedidoMapper.toResponseDTO(pedido);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PedidoResponseDTO> obtenerHistorialClientePaginado(String nombreCliente, String estado, Pageable pageable) {
+        EstadoPedido estadoEnum = null;
+
+        if (estado != null && !estado.isEmpty() && !estado.equalsIgnoreCase("TODOS")) {
+            try {
+                estadoEnum = EstadoPedido.valueOf(estado.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Si mandan un estado inválido, simplemente no filtramos por estado
+            }
+        }
+
+        Page<Pedido> pedidosPage = pedidoRepository.findByNombreClienteAndEstado(nombreCliente, estadoEnum, pageable);
+
+        // Mapeamos el contenido de la página manteniendo la estructura de paginación de Spring
+        return pedidosPage.map(pedidoMapper::toResponseDTO);
+    }
 }

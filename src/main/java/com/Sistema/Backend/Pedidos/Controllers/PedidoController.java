@@ -1,22 +1,29 @@
 package com.Sistema.Backend.Pedidos.Controllers;
 
+import com.Sistema.Backend.Clientes.Entity.Cliente;
+import com.Sistema.Backend.Clientes.Repository.ClienteRepository;
 import com.Sistema.Backend.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Pedidos.Dto.Request.AgregarItemsRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Response.PedidoResponseDTO;
 import com.Sistema.Backend.Pedidos.Entity.EstadoPedido;
 import com.Sistema.Backend.Pedidos.Services.PedidoService;
+import com.Sistema.Backend.Usuarios.Entity.Usuario;
+import com.Sistema.Backend.Usuarios.Repository.UsuarioRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -29,9 +36,13 @@ import java.util.List;
 public class PedidoController {
 
     private final PedidoService pedidoService;
+    private final ClienteRepository clienteRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public PedidoController(PedidoService pedidoService) {
+    public PedidoController(PedidoService pedidoService, ClienteRepository clienteRepository, UsuarioRepository usuarioRepository) {
         this.pedidoService = pedidoService;
+        this.clienteRepository = clienteRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @PostMapping
@@ -154,5 +165,21 @@ public class PedidoController {
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.noContent().build();
         }
+    }
+
+    @GetMapping("/mis-pedidos")
+    @PreAuthorize("hasAuthority('CLIENTE')")
+    public ResponseEntity<Page<PedidoResponseDTO>> obtenerMisPedidos(Authentication authentication,
+                                                                     @RequestParam(required = false, defaultValue = "TODOS") String estado,
+                                                                     @RequestParam(defaultValue = "0") int page,
+                                                                     @RequestParam(defaultValue = "5") int size) {
+        String nombreCliente = authentication.getName();
+
+        // Ordenamos siempre de manera descendente por fecha de creación
+        Pageable pageable = PageRequest.of(page, size, Sort.by("fechaCreacion").descending());
+
+        // 2. Con el nombre del cliente, traemos sus pedidos
+        Page<PedidoResponseDTO> historial = pedidoService.obtenerHistorialClientePaginado(nombreCliente, estado, pageable);
+        return ResponseEntity.ok(historial);
     }
 }

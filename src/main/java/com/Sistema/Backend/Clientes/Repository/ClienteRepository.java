@@ -1,6 +1,7 @@
 package com.Sistema.Backend.Clientes.Repository;
 
 import com.Sistema.Backend.Clientes.Entity.Cliente;
+import com.Sistema.Backend.Usuarios.Entity.Usuario;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,9 @@ import java.util.Optional;
 
 @Repository
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
+
+    // 🌟 Al usar findByUsuario_Username, Spring navega de la entidad Cliente -> Usuario -> campo username
+    Optional<Cliente> findByUsuario_Username(String username);
 
     // Buscar por el ID de la cuenta de usuario vinculada
     Optional<Cliente> findByUsuarioId(Long usuarioId);
@@ -27,4 +31,6 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
             @Param("activo") Boolean activo,
             Pageable pageable
     );
+
+    Optional<Cliente> findByUsuario(Usuario usuario);
 }

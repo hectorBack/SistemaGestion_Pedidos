@@ -75,4 +75,13 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     Optional<Pedido> findByCodigo(String codigo);
 
     Optional<Pedido> findByMesaIdAndEstadoIn(Long mesaId, List<EstadoPedido> estados);
+
+    // Consulta explícita que navega de Pedido -> Cliente -> Usuario -> Username
+    @Query("SELECT p FROM Pedido p WHERE p.nombreCliente = :nombreCliente " +
+            "AND (:estado IS NULL OR p.estado = :estado)")
+    Page<Pedido> findByNombreClienteAndEstado(
+            @Param("nombreCliente") String nombreCliente,
+            @Param("estado") EstadoPedido estado,
+            Pageable pageable
+    );
 }
