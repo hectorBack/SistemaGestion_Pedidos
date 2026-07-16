@@ -24,4 +24,8 @@ public interface ClienteService {
     void cambiarEstadoActivo(Long id, boolean activo);
 
     ClienteResponseDTO obtenerPerfilPorUsername(String username);
+
+    ClienteResponseDTO obtenerPerfilAutenticado(String username);
+
+    ClienteResponseDTO actualizarPerfilAutenticado(String username, ClienteRequestDTO dto);
 }

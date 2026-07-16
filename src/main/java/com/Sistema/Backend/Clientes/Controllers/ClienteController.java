@@ -135,4 +135,16 @@ public class ClienteController {
         ClienteResponseDTO perfilDTO = clienteService.obtenerPerfilPorUsername(username);
         return ResponseEntity.ok(perfilDTO);
     }
+
+    @PutMapping("/perfil")
+    @PreAuthorize("hasAuthority('CLIENTE')")
+    @Operation(summary = "Actualizar mi propio perfil de cliente", description = "Permite al cliente autenticado modificar sus datos personales y credenciales")
+    public ResponseEntity<ClienteResponseDTO> actualizarPerfil(
+            Authentication authentication,
+            @Valid @RequestBody ClienteRequestDTO dto) {
+
+        String username = authentication.getName();
+        ClienteResponseDTO perfilActualizado = clienteService.actualizarPerfilAutenticado(username, dto);
+        return ResponseEntity.ok(perfilActualizado);
+    }
 }

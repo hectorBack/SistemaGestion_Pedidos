@@ -186,4 +186,43 @@ public class ClienteServiceImpl implements ClienteService {
                         .collect(Collectors.toSet()))
                 .build();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ClienteResponseDTO obtenerPerfilAutenticado(String username) {
+        log.info("Obteniendo perfil del cliente: {}", username);
+
+        // Buscamos el cliente por el username de su cuenta de usuario vinculada
+        Cliente cliente = clienteRepository.findByUsuario_Username(username)
+                .orElseThrow(() -> new RuntimeException("Cliente no encontrado para el usuario: " + username));
+
+        return clienteMapper.toResponseDTO(cliente);
+    }
+
+    @Override
+    @Transactional
+    public ClienteResponseDTO actualizarPerfilAutenticado(String username, ClienteRequestDTO dto) {
+        log.info("Actualizando perfil del cliente: {}", username);
+
+        Cliente cliente = clienteRepository.findByUsuario_Username(username)
+                .orElseThrow(() -> new RuntimeException("Cliente no encontrado para el usuario: " + username));
+
+        // 1. Actualizar datos de contacto/entrega del cliente
+        cliente.setNombreCompleto(dto.getNombreCompleto());
+        cliente.setTelefono(dto.getTelefono());
+        cliente.setDireccionEntrega(dto.getDireccionEntrega());
+
+        // 2. Actualizar credenciales de su cuenta de usuario asociada
+        Usuario usuario = cliente.getUsuario();
+        usuario.setEmail(dto.getEmail());
+        usuario.setUsername(dto.getUsername()); // Opcional si permites cambiar el username
+
+        // Si mandó una nueva contraseña, la encriptamos y la guardamos
+        if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
+            usuario.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
+
+        Cliente clienteGuardado = clienteRepository.save(cliente);
+        return clienteMapper.toResponseDTO(clienteGuardado);
+    }
 }
