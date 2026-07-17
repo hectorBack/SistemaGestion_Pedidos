@@ -6,8 +6,8 @@ import com.Sistema.Backend.Mesas.Repository.MesaRepository;
 import com.Sistema.Backend.Pedidos.Dto.Request.AgregarItemsRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Response.PedidoResponseDTO;
-import com.Sistema.Backend.Exception.BusinessException;
-import com.Sistema.Backend.Exception.ResourceNotFoundException;
+import com.Sistema.Backend.Pedidos.Exception.BadRequestException;
+import com.Sistema.Backend.Pedidos.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Pedidos.Mapper.PedidoMapper;
 import com.Sistema.Backend.Pedidos.Dto.Request.ItemPedidoRequestDTO;
 import com.Sistema.Backend.Pedidos.Entity.DetallePedido;
@@ -106,7 +106,7 @@ public class PedidoServiceImpl implements PedidoService {
                     .orElseThrow(() -> new ResourceNotFoundException("Producto ID " + itemDto.getProductoId() + " no encontrado"));
 
             if (!producto.isDisponible()) {
-                throw new BusinessException("El producto " + producto.getNombre() + " no está disponible actualmente.");
+                throw new BadRequestException("El producto " + producto.getNombre() + " no está disponible actualmente.");
             }
 
             DetallePedido detalle = crearDetalle(pedido, producto, itemDto);
@@ -200,7 +200,7 @@ public class PedidoServiceImpl implements PedidoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido " + id + " no existe"));
 
         if (pedido.getEstado() == EstadoPedido.CANCELADO) {
-            throw new BusinessException("No se puede cambiar el estado de un pedido cancelado.");
+            throw new BadRequestException("No se puede cambiar el estado de un pedido cancelado.");
         }
 
         pedido.setEstado(nuevoEstado);
@@ -244,7 +244,7 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public PedidoResponseDTO buscarPorId(Long id) {
         Pedido pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado"));
 
         return pedidoMapper.toResponseDTO(pedido);
     }
@@ -269,7 +269,7 @@ public class PedidoServiceImpl implements PedidoService {
     @Transactional
     public void cancelarPedido(Long id) {
         Pedido pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("No se puede cancelar: Pedido no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("No se puede cancelar: Pedido no encontrado"));
 
         pedido.setEstado(EstadoPedido.CANCELADO);
         pedido.setFechaActualizacion(LocalDateTime.now());
@@ -328,7 +328,7 @@ public class PedidoServiceImpl implements PedidoService {
 
         // Validar que el pedido aún se pueda modificar
         if (pedido.getEstado() == EstadoPedido.ENTREGADO || pedido.getEstado() == EstadoPedido.CANCELADO) {
-            throw new IllegalStateException("No se pueden agregar productos a un pedido finalizado o cancelado");
+            throw new BadRequestException("No se pueden agregar productos a un pedido finalizado o cancelado");
         }
 
         BigDecimal subtotalNuevosItems = BigDecimal.ZERO;
@@ -345,7 +345,7 @@ public class PedidoServiceImpl implements PedidoService {
             detalle.setCantidad(itemDto.getCantidad());
             detalle.setPrecioUnitario(producto.getPrecio());
             detalle.setNotas(itemDto.getNotas());
-            detalle.setEnviadoACocina(false); // 🌟 Es nuevo, va para la cocina
+            detalle.setEnviadoACocina(false); // Es nuevo, va para la cocina
 
             if (itemDto.getSabores() != null) {
                 detalle.setSabores(new ArrayList<>(itemDto.getSabores()));
