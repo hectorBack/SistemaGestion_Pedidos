@@ -1,6 +1,6 @@
 package com.Sistema.Backend.Pagos.Services.Impl;
 
-import com.Sistema.Backend.Exception.ResourceNotFoundException;
+
 import com.Sistema.Backend.Pagos.Dto.ReembolsoRequestDTO;
 import com.Sistema.Backend.Pagos.Dto.Request.PagoRequestDTO;
 import com.Sistema.Backend.Pagos.Dto.Response.HistorialPagosResponseDTO;
@@ -8,6 +8,8 @@ import com.Sistema.Backend.Pagos.Dto.Response.PagoResponseDTO;
 import com.Sistema.Backend.Pagos.Entity.EstadoPago;
 import com.Sistema.Backend.Pagos.Entity.MetodoPago;
 import com.Sistema.Backend.Pagos.Entity.Pago;
+import com.Sistema.Backend.Pagos.Exception.BadRequestException;
+import com.Sistema.Backend.Pagos.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Pagos.Mapper.PagoMapper;
 import com.Sistema.Backend.Pagos.Repository.PagoRepository;
 import com.Sistema.Backend.Pagos.Services.PagoService;
@@ -137,7 +139,7 @@ public class PagoServiceImpl implements PagoService {
                 .orElseThrow(() -> new ResourceNotFoundException("No se encontró el pago con ID: " + id));
 
         if (!"APROBADO".equals(pago.getEstado().toString())) {
-            throw new IllegalStateException("Solo se pueden reembolsar transacciones con estado APROBADO");
+            throw new BadRequestException("Solo se pueden reembolsar transacciones con estado APROBADO");
         }
 
         // 2. Modificar el estado del pago
