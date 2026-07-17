@@ -6,7 +6,8 @@ import com.Sistema.Backend.Categorias.Repository.CategoriaRepository;
 import com.Sistema.Backend.Productos.Dto.Request.ProductoRequestDTO;
 import com.Sistema.Backend.Productos.Dto.Response.ProductoResponseDTO;
 import com.Sistema.Backend.Productos.Entity.Producto;
-import com.Sistema.Backend.Exception.ResourceNotFoundException;
+import com.Sistema.Backend.Productos.Exception.BadRequestException;
+import com.Sistema.Backend.Productos.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Productos.Mapper.ProductoMapper;
 import com.Sistema.Backend.Productos.Repository.ProductoRepository;
 import com.Sistema.Backend.Productos.Services.ProductoService;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +45,14 @@ public class ProductoServiceImpl implements ProductoService {
     public ProductoResponseDTO crear(ProductoRequestDTO request) {
         log.info("Iniciando creación del producto: '{}'", request.getNombre());
         Producto producto = productoMapper.toEntity(request);
+
+        // Asignamos la categoría antes de persistir
+        if (request.getCategoriaId() != null) {
+            Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("No se puede crear el producto. La categoría asociada con ID " + request.getCategoriaId() + " no existe."));
+            producto.setCategoria(categoria);
+        }
+
         ProductoResponseDTO resultado = productoMapper.toResponseDTO(productoRepository.save(producto));
         log.info("Producto creado exitosamente con ID: {}", resultado.getId());
         return resultado;
@@ -114,7 +124,7 @@ public class ProductoServiceImpl implements ProductoService {
                 .map(productoMapper::toResponseDTO)
                 .orElseThrow(() -> {
                     log.error("Error: No se encontró el producto ID: {}", id);
-                    return new EntityNotFoundException("Producto no encontrado");
+                    return new ResourceNotFoundException("Producto no encontrado");
                 });
     }
 
@@ -125,7 +135,7 @@ public class ProductoServiceImpl implements ProductoService {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("No se pudo cambiar estado: Producto ID {} no encontrado", id);
-                    return new EntityNotFoundException("Producto no encontrado");
+                    return new ResourceNotFoundException("Producto no encontrado");
                 });
 
         producto.setDisponible(disponible);
@@ -156,13 +166,18 @@ public class ProductoServiceImpl implements ProductoService {
     @Transactional
     public void actualizarPreciosMasivo(double porcentaje) {
         log.warn("EJECUCIÓN DE PROCESO MASIVO: Actualizando precios de todo el catálogo en un {}%", porcentaje);
-        // Ejemplo: si porcentaje es 10, multiplicamos por 1.10
+
+        // Validar que el porcentaje sea coherente
+        if (porcentaje < -100) {
+            throw new BadRequestException("El porcentaje de actualización masiva no puede ser menor a -100%");
+        }
+
         BigDecimal factor = BigDecimal.valueOf(1 + (porcentaje / 100));
 
         List<Producto> productos = productoRepository.findAll();
         productos.forEach(p -> {
             BigDecimal nuevoPrecio = p.getPrecio().multiply(factor);
-            p.setPrecio(nuevoPrecio);
+            p.setPrecio(nuevoPrecio.setScale(2, RoundingMode.HALF_UP));
         });
 
         productoRepository.saveAll(productos);
@@ -234,7 +249,7 @@ public class ProductoServiceImpl implements ProductoService {
             Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
                     .orElseThrow(() -> {
                         log.error("Fallo de integridad: Categoría ID {} no asociada al sistema", request.getCategoriaId());
-                        return new RuntimeException("Categoría no encontrada con ID: " + request.getCategoriaId());
+                        return new ResourceNotFoundException("Categoría no encontrada con ID: " + request.getCategoriaId());
                     });
             producto.setCategoria(categoria);
         }
