@@ -3,6 +3,8 @@ package com.Sistema.Backend.Clientes.Services.Impl;
 import com.Sistema.Backend.Clientes.Dto.Request.ClienteRequestDTO;
 import com.Sistema.Backend.Clientes.Dto.Response.ClienteResponseDTO;
 import com.Sistema.Backend.Clientes.Entity.Cliente;
+import com.Sistema.Backend.Clientes.Exception.BadRequestException;
+import com.Sistema.Backend.Clientes.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Clientes.Mapper.ClienteMapper;
 import com.Sistema.Backend.Clientes.Repository.ClienteRepository;
 import com.Sistema.Backend.Clientes.Services.ClienteService;
@@ -46,18 +48,18 @@ public class ClienteServiceImpl implements ClienteService {
 
         if (usuarioRepository.existsByUsername(dto.getUsername())) {
             log.warn("Intento de registro fallido: El username '{}' ya existe.", dto.getUsername());
-            throw new RuntimeException("El nombre de usuario ya está en uso");
+            throw new BadRequestException("El nombre de usuario ya está en uso");
         }
         if (usuarioRepository.existsByEmail(dto.getEmail())) {
             log.warn("Intento de registro fallido: El email '{}' ya está en uso.", dto.getEmail());
-            throw new RuntimeException("El correo electrónico ya está registrado");
+            throw new BadRequestException("El correo electrónico ya está registrado");
         }
 
         // Buscar el Rol CLIENTE de forma segura y automática en el backend
         Rol rolCliente = rolRepository.findByNombre(TipoRol.CLIENTE)
                 .orElseThrow(() -> {
                     log.error("Error crítico: El rol CLIENTE no se encuentra en la base de datos.");
-                    return new RuntimeException("Error en la configuración del sistema. El rol CLIENTE no existe.");
+                    return new ResourceNotFoundException("Error en la configuración del sistema. El rol CLIENTE no existe.");
                 });
 
         // Construir la entidad Usuario (Manejo de accesos)
@@ -103,7 +105,7 @@ public class ClienteServiceImpl implements ClienteService {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("No se encontró el cliente con ID: {}", id);
-                    return new RuntimeException("Cliente no encontrado con el ID especificado");
+                    return new ResourceNotFoundException("Cliente no encontrado con el ID especificado");
                 });
         return clienteMapper.toResponseDTO(cliente);
     }
@@ -114,16 +116,16 @@ public class ClienteServiceImpl implements ClienteService {
         log.info("Actualizando datos del cliente con ID: {}", id);
 
         Cliente cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
 
         Usuario usuario = cliente.getUsuario();
 
         // Validaciones cruzadas para evitar duplicar nombres de usuario o emails al editar
         if (!usuario.getUsername().equals(dto.getUsername()) && usuarioRepository.existsByUsername(dto.getUsername())) {
-            throw new RuntimeException("El nombre de usuario ya está asignado a otra cuenta");
+            throw new BadRequestException("El nombre de usuario ya está asignado a otra cuenta");
         }
         if (!usuario.getEmail().equals(dto.getEmail()) && usuarioRepository.existsByEmail(dto.getEmail())) {
-            throw new RuntimeException("El correo electrónico ya está asignado a otra cuenta");
+            throw new BadRequestException("El correo electrónico ya está asignado a otra cuenta");
         }
 
         // Actualizar datos del perfil de cliente
@@ -153,7 +155,7 @@ public class ClienteServiceImpl implements ClienteService {
         log.info("Ejecutando Soft Delete lógico. Cambiando estado 'activo' a {} para el cliente con ID: {}", activo, id);
 
         Cliente cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
 
         // Cambiamos el estado lógico en cascada tanto en el perfil como en las credenciales
         cliente.setActivo(activo);
@@ -168,7 +170,7 @@ public class ClienteServiceImpl implements ClienteService {
     public ClienteResponseDTO obtenerPerfilPorUsername(String username) {
         // 1. Buscamos la entidad cliente usando el método corregido del repositorio
         Cliente cliente = clienteRepository.findByUsuario_Username(username)
-                .orElseThrow(() -> new RuntimeException("Perfil de cliente no encontrado para el usuario: " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de cliente no encontrado para el usuario: " + username));
 
         // 2. Mapeamos la entidad y su usuario relacionado al DTO usando el Builder
         return ClienteResponseDTO.builder()
@@ -194,7 +196,7 @@ public class ClienteServiceImpl implements ClienteService {
 
         // Buscamos el cliente por el username de su cuenta de usuario vinculada
         Cliente cliente = clienteRepository.findByUsuario_Username(username)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado para el usuario: " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado para el usuario: " + username));
 
         return clienteMapper.toResponseDTO(cliente);
     }
@@ -204,20 +206,27 @@ public class ClienteServiceImpl implements ClienteService {
     public ClienteResponseDTO actualizarPerfilAutenticado(String username, ClienteRequestDTO dto) {
         log.info("Actualizando perfil del cliente: {}", username);
 
+        // ResourceNotFoundException
         Cliente cliente = clienteRepository.findByUsuario_Username(username)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado para el usuario: " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("No se puede actualizar: Cliente no encontrado para el usuario: " + username));
 
-        // 1. Actualizar datos de contacto/entrega del cliente
+        Usuario usuario = cliente.getUsuario();
+
+        // Validaciones añadidas por seguridad en la edición del propio perfil (BadRequestException)
+        if (!usuario.getUsername().equals(dto.getUsername()) && usuarioRepository.existsByUsername(dto.getUsername())) {
+            throw new BadRequestException("El nombre de usuario '" + dto.getUsername() + "' ya está en uso");
+        }
+        if (!usuario.getEmail().equals(dto.getEmail()) && usuarioRepository.existsByEmail(dto.getEmail())) {
+            throw new BadRequestException("El correo electrónico '" + dto.getEmail() + "' ya está registrado");
+        }
+
         cliente.setNombreCompleto(dto.getNombreCompleto());
         cliente.setTelefono(dto.getTelefono());
         cliente.setDireccionEntrega(dto.getDireccionEntrega());
 
-        // 2. Actualizar credenciales de su cuenta de usuario asociada
-        Usuario usuario = cliente.getUsuario();
         usuario.setEmail(dto.getEmail());
-        usuario.setUsername(dto.getUsername()); // Opcional si permites cambiar el username
+        usuario.setUsername(dto.getUsername());
 
-        // Si mandó una nueva contraseña, la encriptamos y la guardamos
         if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
             usuario.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
