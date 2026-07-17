@@ -5,6 +5,8 @@ import com.Sistema.Backend.Usuarios.Dto.Response.UsuarioResponseDTO;
 import com.Sistema.Backend.Usuarios.Entity.Rol;
 import com.Sistema.Backend.Usuarios.Entity.TipoRol;
 import com.Sistema.Backend.Usuarios.Entity.Usuario;
+import com.Sistema.Backend.Usuarios.Exception.BadRequestException;
+import com.Sistema.Backend.Usuarios.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Usuarios.Mapper.UsuarioMapper;
 import com.Sistema.Backend.Usuarios.Repository.RolRepository;
 import com.Sistema.Backend.Usuarios.Repository.UsuarioRepository;
@@ -39,7 +41,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional(readOnly = true)
     public Page<UsuarioResponseDTO> listarUsuariosPaginados(String username, Boolean activo, Pageable pageable) {
-        // 🌟 Log de SLF4J idéntico al patrón de categorías
+        // Log de SLF4J idéntico al patrón de categorías
         log.info("Búsqueda paginada de usuarios - Filtro username: '{}' - Filtro Estado (Activo): {} - Página: {} - Tamaño: {}",
                 username, activo, pageable.getPageNumber(), pageable.getPageSize());
 
@@ -57,7 +59,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         log.info("Registrando un nuevo usuario en el sistema con username: {}", dto.getUsername());
 
         if (usuarioRepository.existsByUsername(dto.getUsername())) {
-            throw new RuntimeException("El nombre de usuario ya está en uso");
+            throw new BadRequestException("El nombre de usuario ya está en uso");
         }
 
         // Convertir datos básicos usando el mapper corregido
@@ -75,7 +77,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
                         // Buscamos el rol real que ya existe en la base de datos
                         return rolRepository.findByNombre(nombreEnum)
-                                .orElseThrow(() -> new RuntimeException("Error: El rol " + nombreRolStr + " no existe en la BD."));
+                                .orElseThrow(() -> new BadRequestException("Error: El rol " + nombreRolStr + " no existe en la BD."));
                     })
                     .collect(Collectors.toSet());
 
@@ -104,7 +106,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("No se pudo cambiar el estado. Usuario con ID {} no encontrado.", id);
-                    return new RuntimeException("Usuario no encontrado con ID: " + id);
+                    return new ResourceNotFoundException("Usuario no encontrado con ID: " + id);
                 });
 
         usuario.setActivo(activo);
@@ -118,7 +120,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         log.warn("Se ha solicitado la eliminación física del usuario con ID: {}", id);
         if (!usuarioRepository.existsById(id)) {
             log.error("No se pudo eliminar. Usuario con ID {} no existe.", id);
-            throw new RuntimeException("Usuario no encontrado con ID: " + id);
+            throw new ResourceNotFoundException("Usuario no encontrado con ID: " + id);
         }
         usuarioRepository.deleteById(id);
         log.info("Usuario con ID {} eliminado exitosamente del sistema.", id);
