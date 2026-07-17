@@ -1,4 +1,4 @@
-package com.Sistema.Backend.Exception;
+package com.Sistema.Backend.Empleados.Exception;
 
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String mensaje) {

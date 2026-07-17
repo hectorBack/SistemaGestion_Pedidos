@@ -4,10 +4,10 @@ import com.Sistema.Backend.Empleados.Dto.Request.EmpleadoRequestDTO;
 import com.Sistema.Backend.Empleados.Dto.Response.EmpleadoResponseDTO;
 import com.Sistema.Backend.Empleados.Entity.Empleado;
 import com.Sistema.Backend.Empleados.Entity.PuestoEmpleado;
+import com.Sistema.Backend.Empleados.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Empleados.Mapper.EmpleadoMapper;
 import com.Sistema.Backend.Empleados.Repository.EmpleadoRepository;
 import com.Sistema.Backend.Empleados.Services.EmpleadoService;
-import com.Sistema.Backend.Exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
@@ -47,7 +47,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
         Empleado empleado = empleadoRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("No se encontró el empleado con ID: {}", id);
-                    return new BusinessException("No se encontró el empleado solicitado con ID: " + id);
+                    return new ResourceNotFoundException("No se encontró el empleado solicitado con ID: " + id);
                 });
         return empleadoMapper.toDto(empleado);
     }
@@ -94,7 +94,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
         Empleado empleado = empleadoRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Fallo al actualizar. Empleado no encontrado con ID: {}", id);
-                    return new BusinessException("No se puede actualizar. Empleado no encontrado.");
+                    return new ResourceNotFoundException("No se puede actualizar. Empleado no encontrado.");
                 });
 
         empleadoMapper.updateEntityFromDto(request, empleado);
@@ -108,7 +108,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
     public void cambiarDisponibilidad(Long id, boolean activo) {
         log.info("Cambiando estado de actividad del empleado ID: {} a -> {}", id, activo);
         Empleado empleado = empleadoRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Empleado no localizado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empleado no localizado."));
 
         empleado.setActivo(activo);
         empleadoRepository.save(empleado);
@@ -120,7 +120,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
     public void eliminar(Long id) {
         log.warn("Se ha solicitado la baja del empleado ID: {}", id);
         Empleado empleado = empleadoRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("El empleado que intenta eliminar no existe."));
+                .orElseThrow(() -> new ResourceNotFoundException("El empleado que intenta eliminar no existe."));
 
         // Aplicamos borrado lógico (Soft Delete) modificando el flag 'activo'
         empleado.setActivo(false);
