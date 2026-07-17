@@ -1,12 +1,12 @@
 package com.Sistema.Backend.Mesas.Services.Impl;
 
-import com.Sistema.Backend.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Mesas.Dto.Request.CambioEstadoRequestDTO;
 import com.Sistema.Backend.Mesas.Dto.Request.MesaRequestDTO;
 import com.Sistema.Backend.Mesas.Dto.Response.MesaResponseDTO;
 import com.Sistema.Backend.Mesas.Entity.EstadoMesa;
 import com.Sistema.Backend.Mesas.Entity.Mesa;
-import com.Sistema.Backend.Mesas.Exception.BusinessException;
+import com.Sistema.Backend.Mesas.Exception.BadRequestException;
+import com.Sistema.Backend.Mesas.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Mesas.Mapper.MesaMapper;
 import com.Sistema.Backend.Mesas.Repository.MesaRepository;
 import com.Sistema.Backend.Mesas.Services.MesaService;
@@ -70,7 +70,7 @@ public class MesaServiceImpl implements MesaService {
 
         if (mesaRepository.existsByNumero(request.getNumero())) {
             log.error("Error al crear mesa: El identificador '{}' ya existe", request.getNumero());
-            throw new BusinessException("Ya existe una mesa registrada con el número: " + request.getNumero());
+            throw new BadRequestException("Ya existe una mesa registrada con el número: " + request.getNumero());
         }
 
         Mesa nuevaMesa = mesaMapper.toEntity(request);
@@ -90,7 +90,7 @@ public class MesaServiceImpl implements MesaService {
 
         if (!mesa.getNumero().equalsIgnoreCase(request.getNumero()) && mesaRepository.existsByNumero(request.getNumero())) {
             log.error("Conflictos de actualización: El número '{}' ya pertenece a otra mesa", request.getNumero());
-            throw new BusinessException("El número de mesa ya está en uso");
+            throw new BadRequestException("El número de mesa ya está en uso");
         }
 
         mesa.setNumero(request.getNumero());
@@ -108,15 +108,15 @@ public class MesaServiceImpl implements MesaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Mesa no encontrada con ID: " + id));
 
         if (mesa.getEstado() == EstadoMesa.OCUPADA) {
-            throw new BusinessException("La mesa ya se encuentra ocupada.");
+            throw new BadRequestException("La mesa ya se encuentra ocupada.");
         }
 
         if (meseroId == null) {
-            throw new BusinessException("Es obligatorio asignar un mesero responsable.");
+            throw new BadRequestException("Es obligatorio asignar un mesero responsable.");
         }
 
         if (comandaRequest == null || comandaRequest.getItems() == null || comandaRequest.getItems().isEmpty()) {
-            throw new BusinessException("No se puede abrir una mesa sin productos.");
+            throw new BadRequestException("No se puede abrir una mesa sin productos.");
         }
 
         // 🚀 Adaptamos el flujo creando el PedidoRequestDTO definitivo que exige el PedidoService
@@ -152,11 +152,11 @@ public class MesaServiceImpl implements MesaService {
 
         if (mesa.getEstado() != EstadoMesa.LIBRE) {
             log.warn("Reservación rechazada: La mesa '{}' está en estado {}", mesa.getNumero(), mesa.getEstado());
-            throw new BusinessException("Solo se pueden reservar mesas que estén en estado LIBRE");
+            throw new BadRequestException("Solo se pueden reservar mesas que estén en estado LIBRE");
         }
 
         if (notasReserva == null || notasReserva.isBlank()) {
-            throw new BusinessException("Es necesario especificar las notas de la reservación");
+            throw new BadRequestException("Es necesario especificar las notas de la reservación");
         }
 
         mesa.setEstado(EstadoMesa.RESERVADA);
@@ -178,7 +178,7 @@ public class MesaServiceImpl implements MesaService {
 
         if (nuevo == EstadoMesa.OCUPADA) {
             log.error("Transición inválida: Se intentó cambiar de estado a OCUPADA sin el flujo de asignación");
-            throw new BusinessException("No puedes forzar el estado OCUPADA desde aquí. Utiliza el flujo de apertura.");
+            throw new BadRequestException("No puedes forzar el estado OCUPADA desde aquí. Utiliza el flujo de apertura.");
         }
 
         // 🚀 NUEVA LÓGICA DE NEGOCIO: El servicio ha terminado exitosamente
