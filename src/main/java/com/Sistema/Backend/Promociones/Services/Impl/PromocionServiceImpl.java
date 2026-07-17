@@ -5,7 +5,8 @@ import com.Sistema.Backend.Promociones.Dto.Request.PromocionRequestDTO;
 import com.Sistema.Backend.Promociones.Dto.Response.PromocionResponseDTO;
 import com.Sistema.Backend.Productos.Entity.Producto;
 import com.Sistema.Backend.Promociones.Entity.Promocion;
-import com.Sistema.Backend.Exception.ResourceNotFoundException;
+import com.Sistema.Backend.Promociones.Exception.BadRequestException;
+import com.Sistema.Backend.Promociones.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Promociones.Mapper.PromocionMapper;
 import com.Sistema.Backend.Productos.Repository.ProductoRepository;
 import com.Sistema.Backend.Promociones.Repository.PromocionRepository;
@@ -40,6 +41,14 @@ public class PromocionServiceImpl implements PromocionService {
     public PromocionResponseDTO crearPromocion(PromocionRequestDTO dto) {
         log.info("Iniciando la creación de una nueva promoción: '{}'", dto.getNombre());
         Promocion promocion = promocionMapper.toEntity(dto);
+
+        // Resolver relación de integridad en la creación si se asigna a un producto específico
+        if (dto.getProductoId() != null) {
+            Producto producto = productoRepository.findById(dto.getProductoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("No se puede crear la promoción. El producto asociado con ID " + dto.getProductoId() + " no existe."));
+            promocion.setProducto(producto);
+        }
+
         PromocionResponseDTO resultado = promocionMapper.toResponseDTO(promocionRepository.save(promocion));
         log.info("Promoción creada exitosamente con ID: {}", resultado.getId());
         return resultado;
@@ -117,19 +126,22 @@ public class PromocionServiceImpl implements PromocionService {
 
     @Override
     public void activarPromocion(Long id) {
+        log.info("Solicitud de activación manual para la promoción ID: {}", id);
         Promocion promo = promocionRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Promoción no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Promoción no encontrada"));
 
         if (promo.getFechaFin() != null && LocalDateTime.now().isAfter(promo.getFechaFin())) {
-            throw new IllegalStateException("No se puede activar una promoción que ya ha expirado");
+            throw new BadRequestException("No se puede activar una promoción que ya ha expirado");
         }
 
         promo.setActiva(true);
         promocionRepository.save(promo);
+        log.info("Promoción ID: {} reactivada exitosamente", id);
     }
 
     @Override
     public PromocionStatsDTO obtenerEstadisticasGlobales() {
+        log.info("Calculando métricas y estadísticas globales del módulo de marketing");
         LocalDateTime ahora = LocalDateTime.now();
 
         long total = promocionRepository.countTotal();
