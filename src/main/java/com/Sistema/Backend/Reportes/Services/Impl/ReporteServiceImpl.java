@@ -5,6 +5,8 @@ import com.Sistema.Backend.Pedidos.Repository.DetallePedidoRepository;
 import com.Sistema.Backend.Pedidos.Repository.PedidoRepository;
 import com.Sistema.Backend.Reportes.Dto.VentasPorCategoriaDTO;
 import com.Sistema.Backend.Reportes.Dto.VentasPorPeriodoDTO;
+import com.Sistema.Backend.Reportes.Exception.BadRequestException;
+import com.Sistema.Backend.Reportes.Exception.InternalServerException;
 import com.Sistema.Backend.Reportes.Services.ReporteService;
 
 import com.lowagie.text.Chunk;
@@ -51,6 +53,14 @@ public class ReporteServiceImpl implements ReporteService {
     @Override
     @Transactional(readOnly = true)
     public ReporteVentasDTO generarResumenVentas(LocalDateTime inicio, LocalDateTime fin) {
+        log.info("Iniciando generación de resumen de ventas de: {} a: {}", inicio, fin);
+
+        // VALIDACIÓN DE NEGOCIO: Rango temporal consistente
+        if (inicio != null && fin != null && fin.isBefore(inicio)) {
+            log.error("Fallo al generar reporte: La fecha final {} es anterior a la inicial {}", fin, inicio);
+            throw new BadRequestException("El rango de fechas es inválido. La fecha de fin no puede ser anterior a la fecha de inicio.");
+        }
+
         // 1. Obtener contadores operativos base
         long pedidosExitosos = pedidoRepository.contarPedidosExitosos(inicio, fin);
         long pedidosCancelados = pedidoRepository.contarPedidosCancelados(inicio, fin);
@@ -167,7 +177,7 @@ public class ReporteServiceImpl implements ReporteService {
 
         } catch (IOException e) {
             log.error("Error crítico durante la escritura o compilación del libro Excel POI", e);
-            throw new RuntimeException("Error al generar el archivo Excel de reportes", e);
+            throw new InternalServerException("Error al generar el archivo Excel de reportes", e);
         }
     }
 
@@ -267,7 +277,7 @@ public class ReporteServiceImpl implements ReporteService {
             return new ByteArrayInputStream(out.toByteArray());
         } catch (com.lowagie.text.DocumentException e) {
             log.error("Error grave en la manipulación estructural de iText/OpenPDF", e);
-            throw new RuntimeException("Error construyendo el documento analítico en PDF", e);
+            throw new InternalServerException("Error construyendo el documento analítico en PDF", e);
         }
     }
 
