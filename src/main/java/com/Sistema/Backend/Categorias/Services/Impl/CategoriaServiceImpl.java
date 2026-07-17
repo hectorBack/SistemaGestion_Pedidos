@@ -3,6 +3,8 @@ package com.Sistema.Backend.Categorias.Services.Impl;
 import com.Sistema.Backend.Categorias.Dto.Request.CategoriaRequestDTO;
 import com.Sistema.Backend.Categorias.Dto.Response.CategoriaResponseDTO;
 import com.Sistema.Backend.Categorias.Entity.Categoria;
+import com.Sistema.Backend.Categorias.Exception.BadRequestException;
+import com.Sistema.Backend.Categorias.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Categorias.Mapper.CategoriaMapper;
 import com.Sistema.Backend.Categorias.Repository.CategoriaRepository;
 import com.Sistema.Backend.Categorias.Services.CategoriaService;
@@ -57,7 +59,7 @@ public class CategoriaServiceImpl implements CategoriaService {
     public CategoriaResponseDTO obtenerPorId(Long id) {
         log.info("Buscando categoría con ID: {}", id);
         Categoria categoria = categoriaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + id));
         return categoriaMapper.toResponseDTO(categoria);
     }
 
@@ -74,7 +76,7 @@ public class CategoriaServiceImpl implements CategoriaService {
                 return categoriaMapper.toResponseDTO(categoriaRepository.save(cat));
             } else {
                 log.error("Fallo al crear: La categoría '{}' ya se encuentra activa en el sistema.", dto.getNombre());
-                throw new RuntimeException("La categoría '" + dto.getNombre() + "' ya existe.");
+                throw new BadRequestException("La categoría '" + dto.getNombre() + "' ya existe.");
             }
         }
 
@@ -91,19 +93,19 @@ public class CategoriaServiceImpl implements CategoriaService {
         log.info("Solicitud para actualizar categoría ID: {} con nuevos datos de nombre: '{}'", id, dto.getNombre());
 
         Categoria categoria = categoriaRepository.encontrarPorIdNativo(id)
-                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada"));
 
         // Validar unicidad de nombre si cambió...
         if (!categoria.getNombre().equalsIgnoreCase(dto.getNombre()) &&
                 categoriaRepository.existsByNombreIgnoreCase(dto.getNombre())) {
-            throw new RuntimeException("Ya existe otra categoría con el nombre: " + dto.getNombre());
+            throw new BadRequestException("Ya existe otra categoría con el nombre: " + dto.getNombre());
         }
 
         // 🛠️ BLINDAJE: Si el DTO trae 'activo' en true, o si viene null pero el negocio dicta que al editar se puede reactivar
         // Forzamos la reactivación basándonos en lo que el DTO solicita explícitamente
         if (dto.getActivo() != null && dto.getActivo()) {
             if (Boolean.FALSE.equals(categoria.getActivo())) {
-                log.info("🌟 FORZANDO REACTIVACIÓN: Cambiando estado de categoría ID: {} a TRUE", id);
+                log.info("FORZANDO REACTIVACIÓN: Cambiando estado de categoría ID: {} a TRUE", id);
                 categoria.setActivo(true);
 
                 if (categoria.getProductos() != null) {
@@ -131,7 +133,7 @@ public class CategoriaServiceImpl implements CategoriaService {
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Fallo al eliminar: Categoría ID: {} no existe", id);
-                    return new RuntimeException("Categoría no encontrada.");
+                    return new ResourceNotFoundException("Categoría no encontrada.");
                 });
 
         // 1. Cambiamos el estado de la categoría a falso
