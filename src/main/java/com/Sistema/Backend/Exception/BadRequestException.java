@@ -1,4 +1,4 @@
-package com.Sistema.Backend.Mesas.Exception;
+package com.Sistema.Backend.Exception;
 
 public class BadRequestException extends RuntimeException {
     public BadRequestException(String mensaje) {

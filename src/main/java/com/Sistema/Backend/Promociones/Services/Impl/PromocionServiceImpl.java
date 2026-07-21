@@ -1,17 +1,16 @@
 package com.Sistema.Backend.Promociones.Services.Impl;
 
+import com.Sistema.Backend.Exception.BadRequestException;
+import com.Sistema.Backend.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Promociones.Dto.PromocionStatsDTO;
 import com.Sistema.Backend.Promociones.Dto.Request.PromocionRequestDTO;
 import com.Sistema.Backend.Promociones.Dto.Response.PromocionResponseDTO;
 import com.Sistema.Backend.Productos.Entity.Producto;
 import com.Sistema.Backend.Promociones.Entity.Promocion;
-import com.Sistema.Backend.Promociones.Exception.BadRequestException;
-import com.Sistema.Backend.Promociones.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Promociones.Mapper.PromocionMapper;
 import com.Sistema.Backend.Productos.Repository.ProductoRepository;
 import com.Sistema.Backend.Promociones.Repository.PromocionRepository;
 import com.Sistema.Backend.Promociones.Services.PromocionService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

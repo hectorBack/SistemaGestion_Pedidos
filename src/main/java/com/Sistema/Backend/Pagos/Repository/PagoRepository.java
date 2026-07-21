@@ -1,5 +1,6 @@
 package com.Sistema.Backend.Pagos.Repository;
 
+import com.Sistema.Backend.Pagos.Entity.EstadoPago;
 import com.Sistema.Backend.Pagos.Entity.MetodoPago;
 import com.Sistema.Backend.Pagos.Entity.Pago;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,8 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
 
     // Buscar el pago usando el ID del pedido relacionado
     Optional<Pago> findByPedidoId(Long pedidoId);
+
+    boolean existsByPedidoIdAndEstado(Long pedidoId, EstadoPago estado);
 
     // Filtro avanzado con paginación incorporada: por método y rango de fechas (con horas)
     @Query("SELECT p FROM Pago p WHERE " +

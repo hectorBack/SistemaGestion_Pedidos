@@ -1,4 +1,4 @@
-package com.Sistema.Backend.Pedidos.Exception;
+package com.Sistema.Backend.Exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,12 +1,12 @@
 package com.Sistema.Backend.Usuarios.Services.Impl;
 
+import com.Sistema.Backend.Exception.BadRequestException;
+import com.Sistema.Backend.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Usuarios.Dto.Request.UsuarioRequestDTO;
 import com.Sistema.Backend.Usuarios.Dto.Response.UsuarioResponseDTO;
 import com.Sistema.Backend.Usuarios.Entity.Rol;
 import com.Sistema.Backend.Usuarios.Entity.TipoRol;
 import com.Sistema.Backend.Usuarios.Entity.Usuario;
-import com.Sistema.Backend.Usuarios.Exception.BadRequestException;
-import com.Sistema.Backend.Usuarios.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Usuarios.Mapper.UsuarioMapper;
 import com.Sistema.Backend.Usuarios.Repository.RolRepository;
 import com.Sistema.Backend.Usuarios.Repository.UsuarioRepository;
@@ -45,7 +45,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         log.info("Búsqueda paginada de usuarios - Filtro username: '{}' - Filtro Estado (Activo): {} - Página: {} - Tamaño: {}",
                 username, activo, pageable.getPageNumber(), pageable.getPageSize());
 
-        String filtroUsername = (username != null && !username.trim().isEmpty()) ? username : null;
+        String filtroUsername = (username != null && !username.trim().isEmpty()) ? username.trim() : null;
 
         // Pasamos los filtros directamente a la query nativa del repositorio
         Page<Usuario> usuarios = usuarioRepository.buscarTodosParaAdminPaginado(filtroUsername, activo, pageable);

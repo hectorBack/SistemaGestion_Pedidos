@@ -1,15 +1,17 @@
 package com.Sistema.Backend.Mesas.Services.Impl;
 
+import com.Sistema.Backend.Exception.BadRequestException;
+import com.Sistema.Backend.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Mesas.Dto.Request.CambioEstadoRequestDTO;
 import com.Sistema.Backend.Mesas.Dto.Request.MesaRequestDTO;
 import com.Sistema.Backend.Mesas.Dto.Response.MesaResponseDTO;
 import com.Sistema.Backend.Mesas.Entity.EstadoMesa;
 import com.Sistema.Backend.Mesas.Entity.Mesa;
-import com.Sistema.Backend.Mesas.Exception.BadRequestException;
-import com.Sistema.Backend.Mesas.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Mesas.Mapper.MesaMapper;
 import com.Sistema.Backend.Mesas.Repository.MesaRepository;
 import com.Sistema.Backend.Mesas.Services.MesaService;
+import com.Sistema.Backend.Pagos.Entity.EstadoPago;
+import com.Sistema.Backend.Pagos.Repository.PagoRepository;
 import com.Sistema.Backend.Pedidos.Dto.Request.ComandaMesaRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Response.PedidoResponseDTO;
@@ -27,11 +29,13 @@ import java.util.stream.Collectors;
 public class MesaServiceImpl implements MesaService {
 
     private final MesaRepository mesaRepository;
+    private final PagoRepository pagoRepository;
     private final MesaMapper mesaMapper;
     private final PedidoService pedidoService;
 
-    public MesaServiceImpl(MesaRepository mesaRepository, MesaMapper mesaMapper, PedidoService pedidoService) {
+    public MesaServiceImpl(MesaRepository mesaRepository, PagoRepository pagoRepository, MesaMapper mesaMapper, PedidoService pedidoService) {
         this.mesaRepository = mesaRepository;
+        this.pagoRepository = pagoRepository;
         this.mesaMapper = mesaMapper;
         this.pedidoService = pedidoService;
     }
@@ -169,29 +173,29 @@ public class MesaServiceImpl implements MesaService {
     @Override
     @Transactional
     public MesaResponseDTO cambiarEstadoRapido(Long id, CambioEstadoRequestDTO request) {
-        log.info("Solicitud de cambio de estado rápido para mesa ID: {} -> {}", id, request.getNuevoEstado());
-
         Mesa mesa = mesaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Mesa no encontrada"));
 
         EstadoMesa nuevo = request.getNuevoEstado();
 
         if (nuevo == EstadoMesa.OCUPADA) {
-            log.error("Transición inválida: Se intentó cambiar de estado a OCUPADA sin el flujo de asignación");
             throw new BadRequestException("No puedes forzar el estado OCUPADA desde aquí. Utiliza el flujo de apertura.");
         }
 
-        // 🚀 NUEVA LÓGICA DE NEGOCIO: El servicio ha terminado exitosamente
-        if (nuevo == EstadoMesa.SUCIA) {
-            if (mesa.getPedidoId() != null) {
-                log.info("Finalizando servicio de la mesa '{}'. Cambiando Pedido ID: {} a ENTREGADO.", mesa.getNumero(), mesa.getPedidoId());
+        // VALIDACIÓN DE SEGURIDAD CONTABLE:
+        // Evitar desvincular la mesa si tiene un pedido activo que NO ha sido pagado aún en la tabla de Pagos.
+        if ((nuevo == EstadoMesa.SUCIA || nuevo == EstadoMesa.LIBRE) && mesa.getPedidoId() != null) {
 
-                // Cambiamos el estado del pedido de forma automática en la base de datos
-                pedidoService.actualizarEstado(mesa.getPedidoId(), EstadoPedido.ENTREGADO);
+            // Verificamos si existe un registro de Pago en la base de datos para este pedido
+            boolean estaPagado = pagoRepository.existsByPedidoIdAndEstado(mesa.getPedidoId(), EstadoPago.APROBADO);
+
+            if (!estaPagado) {
+                throw new BadRequestException("No se puede liberar la mesa " + mesa.getNumero() +
+                        " porque el pedido ID " + mesa.getPedidoId() + " no tiene un pago registrado en Caja.");
             }
         }
 
-        // 🧼 Limpieza de metadatos (Aplica cuando pasa a SUCIA para liberar el ID del pedido, o a LIBRE)
+        // Si ya está verificado el pago, procedemos con la limpieza de metadatos de la mesa
         if (nuevo == EstadoMesa.SUCIA || nuevo == EstadoMesa.LIBRE) {
             log.debug("Limpiando metadatos y enlaces de pedido para la mesa '{}'", mesa.getNumero());
             mesa.setPedidoId(null);
@@ -200,7 +204,6 @@ public class MesaServiceImpl implements MesaService {
         }
 
         mesa.setEstado(nuevo);
-        log.info("Estado de la mesa '{}' actualizado con éxito a {}", mesa.getNumero(), nuevo);
         return mesaMapper.toResponse(mesaRepository.save(mesa));
     }
 }

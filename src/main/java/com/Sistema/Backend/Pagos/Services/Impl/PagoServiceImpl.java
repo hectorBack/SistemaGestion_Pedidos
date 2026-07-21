@@ -1,6 +1,10 @@
 package com.Sistema.Backend.Pagos.Services.Impl;
 
 
+import com.Sistema.Backend.Exception.BadRequestException;
+import com.Sistema.Backend.Exception.ResourceNotFoundException;
+import com.Sistema.Backend.Mesas.Entity.EstadoMesa;
+import com.Sistema.Backend.Mesas.Entity.Mesa;
 import com.Sistema.Backend.Pagos.Dto.ReembolsoRequestDTO;
 import com.Sistema.Backend.Pagos.Dto.Request.PagoRequestDTO;
 import com.Sistema.Backend.Pagos.Dto.Response.HistorialPagosResponseDTO;
@@ -8,8 +12,6 @@ import com.Sistema.Backend.Pagos.Dto.Response.PagoResponseDTO;
 import com.Sistema.Backend.Pagos.Entity.EstadoPago;
 import com.Sistema.Backend.Pagos.Entity.MetodoPago;
 import com.Sistema.Backend.Pagos.Entity.Pago;
-import com.Sistema.Backend.Pagos.Exception.BadRequestException;
-import com.Sistema.Backend.Pagos.Exception.ResourceNotFoundException;
 import com.Sistema.Backend.Pagos.Mapper.PagoMapper;
 import com.Sistema.Backend.Pagos.Repository.PagoRepository;
 import com.Sistema.Backend.Pagos.Services.PagoService;
@@ -68,9 +70,28 @@ public class PagoServiceImpl implements PagoService {
 
         // 5. 🚀 REGLA DE NEGOCIO: Si el pago se aprueba, el pedido avanza automáticamente a la cocina
         if (pagoGuardado.getEstado() == EstadoPago.APROBADO) {
-            log.info("PAGO APROBADO detectado de forma automática. Avanzando estado del Pedido ID: {} a EN_COCINA", pedido.getId());
-            pedido.setEstado(EstadoPedido.EN_COCINA);
+
+            // Si el pedido ya fue entregado (ej. consumo en Mesa cobrado al final)
+            if (pedido.getEstado() == EstadoPedido.ENTREGADO) {
+                log.info("Pedido ID: {} pagado con éxito tras entrega.", pedido.getId());
+                // Si manejas un estado final como PAGADO o FINALIZADO, asígnalo aquí:
+                pedido.setEstado(EstadoPedido.LISTO);
+            }
+            // Si es cobro por adelantado (ej. Mostrador) y está PENDIENTE
+            else if (pedido.getEstado() == EstadoPedido.PENDIENTE) {
+                log.info("Pago por adelantado. Avanzando Pedido ID: {} a EN_COCINA", pedido.getId());
+                pedido.setEstado(EstadoPedido.EN_COCINA);
+            }
+
             pedidoRepository.save(pedido);
+
+            // 6. LIBERAR LA MESA (Si el pedido proviene de una mesa)
+            if (pedido.getMesa() != null) {
+                Mesa mesa = pedido.getMesa();
+                mesa.setEstado(EstadoMesa.LIBRE); // O EstadoMesa.LIBRE según tu Enum
+                // mesaRepository.save(mesa); (si tienes inyectado MesaRepository)
+                log.info("Mesa ID: {} liberada exitosamente tras registrar el pago.", mesa.getId());
+            }
         }
 
         return pagoMapper.toResponseDTO(pagoGuardado);
