@@ -6,6 +6,7 @@ import com.Sistema.Backend.Pedidos.Dto.Response.PedidoResponseDTO;
 import com.Sistema.Backend.Pedidos.Entity.EstadoPedido;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,7 +15,7 @@ import java.util.List;
 public interface PedidoService {
 
     // Registro de pedido desde el link del cliente
-    PedidoResponseDTO crearPedido(PedidoRequestDTO request);
+    PedidoResponseDTO crearPedido(PedidoRequestDTO request, Authentication authentication);
 
     // Listado para el monitor de cocina (Solo PENDIENTE y EN_COCINA)
     List<PedidoResponseDTO> obtenerPedidosActivos();
@@ -69,5 +70,10 @@ public interface PedidoService {
 
     PedidoResponseDTO obtenerPedidoActivoPorMesa(Long mesaId);
 
-    Page<PedidoResponseDTO> obtenerHistorialClientePaginado(String nombreCliente, String estado, Pageable pageable);
+    public Page<PedidoResponseDTO> obtenerHistorialClientePaginado(
+            String nombreCliente,
+            String estado,
+            String fechaInicioStr,
+            String fechaFinStr,
+            Pageable pageable);
 }

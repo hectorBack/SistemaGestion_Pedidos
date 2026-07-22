@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,8 +56,8 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     @Transactional
-    public PedidoResponseDTO crearPedido(PedidoRequestDTO request) {
-        Pedido pedido = inicializarNuevoPedido(request);
+    public PedidoResponseDTO crearPedido(PedidoRequestDTO request, Authentication authentication) {
+        Pedido pedido = inicializarNuevoPedido(request, authentication);
 
         // Optimizamos: Validamos productos y calculamos total
         procesarItemsDelPedido(request, pedido);
@@ -66,19 +67,27 @@ public class PedidoServiceImpl implements PedidoService {
 
     // --- MÉTODOS PRIVADOS PARA MANTENIBILIDAD ---
 
-    private Pedido inicializarNuevoPedido(PedidoRequestDTO request) {
+    private Pedido inicializarNuevoPedido(PedidoRequestDTO request, Authentication authentication) {
         Pedido pedido = new Pedido();
         pedido.setWhatsappFinal(request.getWhatsappFinal());
-        pedido.setNombreCliente(request.getNombreCliente());
+
+        // SI EL USUARIO ESTÁ AUTENTICADO, USA EL USERNAME DE LA SESIÓN.
+        // Si la llamada es pública o de mesa sin login, cae al nombre pasado en el DTO.
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+            pedido.setNombreCliente(authentication.getName()); // Asigna ej: "juan@email.com"
+        } else {
+            pedido.setNombreCliente(request.getNombreCliente());
+        }
+
         pedido.setEstado(EstadoPedido.PENDIENTE);
         pedido.setDetalles(new ArrayList<>()); // Aseguramos inicialización
 
-        // 🌟 NUEVA LÓGICA: Si viene un ID de mesa, lo asociamos al pedido
+        // NUEVA LÓGICA: Si viene un ID de mesa, lo asociamos al pedido
         if (request.getMesaId() != null) {
             Mesa mesa = mesaRepository.findById(request.getMesaId())
                     .orElseThrow(() -> new ResourceNotFoundException("La mesa con ID " + request.getMesaId() + " no existe"));
 
-            // 🚀 CAMBIO EXPLICITO: Cambiar estado a ocupada
+            // CAMBIO EXPLICITO: Cambiar estado a ocupada
             mesa.setEstado(EstadoMesa.OCUPADA); // Asegúrate de usar tu Enum o String correspondiente (ej. "OCUPADA" o EstadoMesa.OCUPADA)
 
             // Guardamos el cambio en la mesa
@@ -382,20 +391,39 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PedidoResponseDTO> obtenerHistorialClientePaginado(String nombreCliente, String estado, Pageable pageable) {
+    public Page<PedidoResponseDTO> obtenerHistorialClientePaginado(
+            String nombreCliente,
+            String estado,
+            String fechaInicioStr,
+            String fechaFinStr,
+            Pageable pageable) {
+
         EstadoPedido estadoEnum = null;
 
-        if (estado != null && !estado.isEmpty() && !estado.equalsIgnoreCase("TODOS")) {
+        if (estado != null && !estado.isEmpty() && !"TODOS".equalsIgnoreCase(estado)) {
             try {
                 estadoEnum = EstadoPedido.valueOf(estado.toUpperCase());
             } catch (IllegalArgumentException e) {
-                // Si mandan un estado inválido, simplemente no filtramos por estado
+                // Si mandan un estado inválido, no filtramos por estado
             }
         }
 
-        Page<Pedido> pedidosPage = pedidoRepository.findByNombreClienteAndEstado(nombreCliente, estadoEnum, pageable);
+        // Convertir fechas recibidas en LocalDateTime para abarcar horas completas
+        LocalDateTime inicio = null;
+        LocalDateTime fin = null;
 
-        // Mapeamos el contenido de la página manteniendo la estructura de paginación de Spring
+        if (fechaInicioStr != null && !fechaInicioStr.isBlank()) {
+            inicio = LocalDate.parse(fechaInicioStr).atStartOfDay(); // 00:00:00
+        }
+
+        if (fechaFinStr != null && !fechaFinStr.isBlank()) {
+            fin = LocalDate.parse(fechaFinStr).atTime(LocalTime.MAX); // 23:59:59
+        }
+
+        // Llamada corregida con 'findByNombreClienteAndEstadoYFechas'
+        Page<Pedido> pedidosPage = pedidoRepository.findByNombreClienteAndEstadoYFechas(
+                nombreCliente, estadoEnum, inicio, fin, pageable);
+
         return pedidosPage.map(pedidoMapper::toResponseDTO);
     }
 }

@@ -18,6 +18,7 @@ import com.Sistema.Backend.Pedidos.Dto.Response.PedidoResponseDTO;
 import com.Sistema.Backend.Pedidos.Entity.EstadoPedido;
 import com.Sistema.Backend.Pedidos.Services.PedidoService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,7 +106,7 @@ public class MesaServiceImpl implements MesaService {
 
     @Override
     @Transactional
-    public MesaResponseDTO abrirMesa(Long id, ComandaMesaRequestDTO comandaRequest, Long meseroId) {
+    public MesaResponseDTO abrirMesa(Long id, ComandaMesaRequestDTO comandaRequest, Long meseroId, Authentication authentication) {
         log.info("Iniciando apertura con ComandaMesaRequestDTO para mesa ID: {}", id);
 
         Mesa mesa = mesaRepository.findById(id)
@@ -135,7 +136,7 @@ public class MesaServiceImpl implements MesaService {
         pedidoRequest.setWhatsappFinal("0000000000");
 
         // Delegamos la creación al servicio de pedidos
-        PedidoResponseDTO pedidoGuardado = pedidoService.crearPedido(pedidoRequest);
+        PedidoResponseDTO pedidoGuardado = pedidoService.crearPedido(pedidoRequest, null);
 
         // Enlazamos la mesa
         mesa.setEstado(EstadoMesa.OCUPADA);
@@ -182,7 +183,7 @@ public class MesaServiceImpl implements MesaService {
             throw new BadRequestException("No puedes forzar el estado OCUPADA desde aquí. Utiliza el flujo de apertura.");
         }
 
-        // VALIDACIÓN DE SEGURIDAD CONTABLE:
+        // 🛡️ VALIDACIÓN DE SEGURIDAD CONTABLE:
         // Evitar desvincular la mesa si tiene un pedido activo que NO ha sido pagado aún en la tabla de Pagos.
         if ((nuevo == EstadoMesa.SUCIA || nuevo == EstadoMesa.LIBRE) && mesa.getPedidoId() != null) {
 
@@ -195,7 +196,7 @@ public class MesaServiceImpl implements MesaService {
             }
         }
 
-        // Si ya está verificado el pago, procedemos con la limpieza de metadatos de la mesa
+        // 🧼 Si ya está verificado el pago, procedemos con la limpieza de metadatos de la mesa
         if (nuevo == EstadoMesa.SUCIA || nuevo == EstadoMesa.LIBRE) {
             log.debug("Limpiando metadatos y enlaces de pedido para la mesa '{}'", mesa.getNumero());
             mesa.setPedidoId(null);

@@ -6,6 +6,7 @@ import com.Sistema.Backend.Mesas.Dto.Response.MesaResponseDTO;
 import com.Sistema.Backend.Mesas.Entity.EstadoMesa;
 import com.Sistema.Backend.Pedidos.Dto.Request.ComandaMesaRequestDTO;
 import com.Sistema.Backend.Pedidos.Dto.Request.PedidoRequestDTO;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public interface MesaService {
     MesaResponseDTO actualizarMesa(Long id, MesaRequestDTO request);
 
     // Métodos operativos con reglas de negocio específicas
-    MesaResponseDTO abrirMesa(Long id, ComandaMesaRequestDTO comandaRequest, Long meseroId);
+    MesaResponseDTO abrirMesa(Long id, ComandaMesaRequestDTO comandaRequest, Long meseroId, Authentication authentication);
     MesaResponseDTO cambiarEstadoRapido(Long id, CambioEstadoRequestDTO request);
     MesaResponseDTO reservarMesa(Long id, String notasReserva);
 }

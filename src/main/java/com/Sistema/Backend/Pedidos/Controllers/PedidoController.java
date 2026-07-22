@@ -52,8 +52,8 @@ public class PedidoController {
             @ApiResponse(responseCode = "201", description = "Pedido registrado con éxito"),
             @ApiResponse(responseCode = "400", description = "Validación fallida en los datos enviados")
     })
-    public ResponseEntity<PedidoResponseDTO> crearPedido(@Valid @RequestBody PedidoRequestDTO request) {
-        return new ResponseEntity<>(pedidoService.crearPedido(request), HttpStatus.CREATED);
+    public ResponseEntity<PedidoResponseDTO> crearPedido(@Valid @RequestBody PedidoRequestDTO request, Authentication authentication) {
+        return new ResponseEntity<>(pedidoService.crearPedido(request, authentication), HttpStatus.CREATED);
     }
 
     @GetMapping("/activos")
@@ -169,17 +169,23 @@ public class PedidoController {
 
     @GetMapping("/mis-pedidos")
     @PreAuthorize("hasAuthority('CLIENTE')")
-    public ResponseEntity<Page<PedidoResponseDTO>> obtenerMisPedidos(Authentication authentication,
-                                                                     @RequestParam(required = false, defaultValue = "TODOS") String estado,
-                                                                     @RequestParam(defaultValue = "0") int page,
-                                                                     @RequestParam(defaultValue = "5") int size) {
+    public ResponseEntity<Page<PedidoResponseDTO>> obtenerMisPedidos(
+            Authentication authentication,
+            @RequestParam(required = false, defaultValue = "TODOS") String estado,
+            @RequestParam(required = false) String fechaInicio,
+            @RequestParam(required = false) String fechaFin,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+
         String nombreCliente = authentication.getName();
 
         // Ordenamos siempre de manera descendente por fecha de creación
         Pageable pageable = PageRequest.of(page, size, Sort.by("fechaCreacion").descending());
 
-        // 2. Con el nombre del cliente, traemos sus pedidos
-        Page<PedidoResponseDTO> historial = pedidoService.obtenerHistorialClientePaginado(nombreCliente, estado, pageable);
+        // Pasamos fechaInicio y fechaFin al servicio
+        Page<PedidoResponseDTO> historial = pedidoService.obtenerHistorialClientePaginado(
+                nombreCliente, estado, fechaInicio, fechaFin, pageable);
+
         return ResponseEntity.ok(historial);
     }
 }

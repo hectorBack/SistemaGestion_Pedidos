@@ -76,7 +76,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     Optional<Pedido> findByMesaIdAndEstadoIn(Long mesaId, List<EstadoPedido> estados);
 
-    // Consulta explícita que navega de Pedido -> Cliente -> Usuario -> Username
+    // Navega: Pedido (p) -> Cliente (cliente) -> Usuario (usuario) -> Username (username)
     @Query("SELECT p FROM Pedido p WHERE p.nombreCliente = :nombreCliente " +
             "AND (:estado IS NULL OR p.estado = :estado)")
     Page<Pedido> findByNombreClienteAndEstado(
@@ -84,4 +84,15 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
             @Param("estado") EstadoPedido estado,
             Pageable pageable
     );
+
+    @Query("SELECT p FROM Pedido p WHERE p.nombreCliente = :nombreCliente " +
+            "AND (CAST(:estado AS string) IS NULL OR p.estado = :estado) " +
+            "AND (CAST(:fechaInicio AS timestamp) IS NULL OR p.fechaCreacion >= :fechaInicio) " +
+            "AND (CAST(:fechaFin AS timestamp) IS NULL OR p.fechaCreacion <= :fechaFin)")
+    Page<Pedido> findByNombreClienteAndEstadoYFechas(
+            @Param("nombreCliente") String nombreCliente,
+            @Param("estado") EstadoPedido estado,
+            @Param("fechaInicio") LocalDateTime fechaInicio,
+            @Param("fechaFin") LocalDateTime fechaFin,
+            Pageable pageable);
 }
