@@ -24,4 +24,7 @@ public class PedidoResponseDTO {
     private String notas;
     private Long mesaId;       // ID por si necesitas hacer consultas en Vue
     private String numeroMesa; // El número físico (ej: Mesa 3) para mostrar en pantalla
+
+    // Campo para la promoción general del pedido entero
+    private String nombrePromocion;
 }

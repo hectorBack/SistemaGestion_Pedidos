@@ -102,10 +102,13 @@ public class PedidoServiceImpl implements PedidoService {
         BigDecimal totalAcumulado = BigDecimal.ZERO;
         Promocion promocion = null;
 
-        // 1. Validar y cargar la promoción si viene en el DTO
+        // Validar y cargar la promoción si viene en el DTO
         if (request.getPromocionId() != null) {
             promocion = promocionRepository.findById(request.getPromocionId())
                     .orElseThrow(() -> new ResourceNotFoundException("La promoción con ID " + request.getPromocionId() + " no existe"));
+
+            // Asignar la promoción al Pedido para que persista en la BD
+            pedido.setPromocion(promocion);
         }
 
         // 1. Sumar los subtotales de los productos individuales
@@ -140,6 +143,9 @@ public class PedidoServiceImpl implements PedidoService {
 
                     // Seteamos el precio real cobrado ($94.50) en el detalle del pedido
                     detalle.setPrecioUnitario(precioAplicado.setScale(2, java.math.RoundingMode.HALF_UP));
+
+                    // OPCIONAL: Si relacionaste Promoción en DetallePedido.java, asígnasela aquí:
+                    detalle.setPromocion(promocion);
                 }
             }
 

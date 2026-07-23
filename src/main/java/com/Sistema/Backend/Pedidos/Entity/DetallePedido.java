@@ -1,6 +1,7 @@
 package com.Sistema.Backend.Pedidos.Entity;
 
 import com.Sistema.Backend.Productos.Entity.Producto;
+import com.Sistema.Backend.Promociones.Entity.Promocion;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;
@@ -55,4 +56,8 @@ public class DetallePedido {
     @Column(name = "sabor")
     @Fetch(FetchMode.SUBSELECT)
     private List<String> sabores = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promocion_id")
+    private Promocion promocion;
 }

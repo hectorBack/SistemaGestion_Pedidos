@@ -1,6 +1,7 @@
 package com.Sistema.Backend.Pedidos.Entity;
 
 import com.Sistema.Backend.Mesas.Entity.Mesa;
+import com.Sistema.Backend.Promociones.Entity.Promocion;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;
@@ -53,6 +54,10 @@ public class Pedido {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mesa_id") // Nombre de la columna de la llave foránea en tu tabla pedidos
     private Mesa mesa;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promocion_id") // Nombre de la columna foránea en la tabla 'pedidos'
+    private Promocion promocion;
 
     @PrePersist
     protected void onCreate() {

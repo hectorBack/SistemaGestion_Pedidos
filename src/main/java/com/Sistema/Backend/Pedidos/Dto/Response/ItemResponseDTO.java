@@ -1,6 +1,5 @@
 package com.Sistema.Backend.Pedidos.Dto.Response;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,4 +15,7 @@ public class ItemResponseDTO {
     private BigDecimal precioUnitario;
     private String notas;
     private List<String> sabores;
+
+    // Campo para promociones específicas de este producto
+    private String promocionNombre;
 }

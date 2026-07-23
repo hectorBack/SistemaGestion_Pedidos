@@ -1,6 +1,7 @@
 package com.Sistema.Backend.Productos.Entity;
 
 import com.Sistema.Backend.Categorias.Entity.Categoria;
+import com.Sistema.Backend.Promociones.Entity.Promocion;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -46,4 +47,8 @@ public class Producto {
     @CollectionTable(name = "producto_sabores", joinColumns = @JoinColumn(name = "producto_id"))
     @Column(name = "sabor")
     private List<String> sabores = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promocion_id") // Clave foránea si el producto apunta a su promoción activa
+    private Promocion promocion;
 }

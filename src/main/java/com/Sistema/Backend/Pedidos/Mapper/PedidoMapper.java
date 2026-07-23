@@ -26,6 +26,10 @@ public class PedidoMapper {
         dto.setFechaActualizacion(pedido.getFechaActualizacion());
         dto.setNotas(pedido.getNotas());
 
+        // 1. PROMOCIÓN A NIVEL DE PEDIDO (GLOBAL)
+        if (pedido.getPromocion() != null) {
+            dto.setNombrePromocion(pedido.getPromocion().getNombre());
+        }
 
         dto.setDetalles(pedido.getDetalles().stream()
                 .map(this::toItemResponseDTO)
@@ -46,7 +50,15 @@ public class PedidoMapper {
         dto.setPrecioUnitario(detalle.getPrecioUnitario());
         dto.setNotas(detalle.getNotas());
 
-        // 🌶️ SOLUCCIÓN: Forzamos la inicialización limpia de la lista para el JSON de respuesta
+        // 🌟 2. PROMOCIÓN A NIVEL DE ÍTEM (PRODUCTO ESPECÍFICO)
+        // Evaluamos si el detalle tiene promoción asociada directamente o a través del producto
+        if (detalle.getPromocion() != null) {
+            dto.setPromocionNombre(detalle.getPromocion().getNombre());
+        } else if (detalle.getProducto() != null && detalle.getProducto().getPromocion() != null) {
+            dto.setPromocionNombre(detalle.getProducto().getPromocion().getNombre());
+        }
+
+        // 🌶️ SOLUCIÓN: Forzamos la inicialización limpia de la lista para el JSON de respuesta
         if (detalle.getSabores() != null) {
             dto.setSabores(new ArrayList<>(detalle.getSabores()));
         } else {
